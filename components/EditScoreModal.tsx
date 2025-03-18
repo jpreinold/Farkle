@@ -1,7 +1,8 @@
 // components/EditScoreModal.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Modal, View, Text, TextInput, StyleSheet } from 'react-native';
 import CustomButton from './CustomButton';
+import { ThemeContext, darkTheme } from './ThemeContext';
 
 interface Score {
   id: number;
@@ -18,6 +19,7 @@ interface EditScoreModalProps {
 }
 
 const EditScoreModal: React.FC<EditScoreModalProps> = ({ visible, entry, onSave, onCancel }) => {
+  const { theme } = useContext(ThemeContext);
   const [score, setScore] = useState(entry.score.toString());
   const [note, setNote] = useState(entry.note);
 
@@ -38,24 +40,24 @@ const EditScoreModal: React.FC<EditScoreModalProps> = ({ visible, entry, onSave,
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onCancel}>
       <View style={styles.modalOverlay}>
-        <View style={styles.modalContainer}>
-          <Text style={styles.modalTitle}>Edit Score</Text>
-          <Text style={styles.label}>Score:</Text>
+        <View style={[styles.modalContainer, { backgroundColor: theme.background }]}>
+          <Text style={[styles.modalTitle, { color: theme.titleText }]}>Edit Score</Text>
+          <Text style={[styles.label, { color: theme.titleText }]}>Score:</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { borderColor: theme.inputBorder, color: theme.text }]}
             keyboardType="numeric"
             value={score}
             onChangeText={setScore}
             placeholder="Enter score"
-            placeholderTextColor="#999"
+            placeholderTextColor={theme.inputBorder}
           />
-          <Text style={styles.label}>Note:</Text>
+          <Text style={[styles.label, { color: theme.titleText }]}>Note:</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { borderColor: theme.inputBorder, color: theme.text }]}
             value={note}
             onChangeText={setNote}
             placeholder="Enter note"
-            placeholderTextColor="#999"
+            placeholderTextColor={theme.inputBorder}
           />
           <View style={styles.buttonRow}>
             <CustomButton title="Save" onPress={handleSave} style={styles.button} />
@@ -76,7 +78,6 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     width: '85%',
-    backgroundColor: '#fff',
     padding: 24,
     borderRadius: 10,
     elevation: 6,
@@ -86,23 +87,19 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '700',
     marginBottom: 16,
-    color: '#333',
   },
   label: {
     alignSelf: 'flex-start',
     fontSize: 16,
     marginBottom: 4,
-    color: '#333',
   },
   input: {
     width: '100%',
     borderWidth: 1,
-    borderColor: '#ddd',
     borderRadius: 6,
     padding: 12,
     fontSize: 16,
     marginBottom: 12,
-    color: '#333',
   },
   buttonRow: {
     flexDirection: 'row',

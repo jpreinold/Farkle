@@ -1,17 +1,18 @@
 // components/HistoryPage.tsx
-import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  TouchableOpacity, 
+import React, { useState, useEffect, useContext } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
   Modal,
-  Dimensions 
+  Dimensions,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import CustomButton from './CustomButton';
 import Header from './Header';
+import { ThemeContext, darkTheme } from './ThemeContext';
 
 interface Score {
   id: number;
@@ -35,6 +36,7 @@ interface HistoryPageProps {
 }
 
 const HistoryPage: React.FC<HistoryPageProps> = ({ onBack }) => {
+  const { theme } = useContext(ThemeContext);
   const [history, setHistory] = useState<GameHistory[]>([]);
   const [selectedGame, setSelectedGame] = useState<GameHistory | null>(null);
 
@@ -52,19 +54,28 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ onBack }) => {
     loadHistory();
   }, []);
 
-  const renderHistoryItem = (game: GameHistory) => (
-    <TouchableOpacity
-      key={game.id}
-      style={styles.historyItem}
-      onPress={() => setSelectedGame(game)}
-    >
-      <Text style={styles.historyDate}>{game.date}</Text>
-      <Text style={styles.historyWinner}>Winner: {game.winner}</Text>
-      <Text style={styles.historyPlayers}>Players: {game.players.join(', ')}</Text>
-    </TouchableOpacity>
-  );
+  const renderHistoryItem = (game: GameHistory) => {
+    const isDark = theme.primary === darkTheme.primary;
+    const backgroundColor = isDark ? theme.secondary : theme.secondary + '33';
+    const winnerColor = isDark ? theme.text : theme.primary;
 
-  // Render game details modal with an increased height.
+    return (
+      <TouchableOpacity
+        key={game.id}
+        style={[styles.historyItem, { backgroundColor }]}
+        onPress={() => setSelectedGame(game)}
+      >
+        <Text style={[styles.historyDate, { color: theme.text }]}>{game.date}</Text>
+        <Text style={[styles.historyWinner, { color: winnerColor }]}>
+          Winner: {game.winner}
+        </Text>
+        <Text style={[styles.historyPlayers, { color: theme.text }]}>
+          Players: {game.players.join(', ')}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
+
   const renderGameDetailsModal = () => {
     if (!selectedGame) return null;
 
@@ -75,24 +86,22 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ onBack }) => {
     const tableData: (string | number)[][] = [];
     for (let r = 0; r < numRounds; r++) {
       const row: (string | number)[] = [];
-      row.push(r + 1); // round number
-      for (let j = 0; j < numPlayers; j++) {
-        const index = r * numPlayers + j;
+      row.push(r + 1);
+      for (let j = 0; j < players.length; j++) {
+        const index = r * players.length + j;
         row.push(index < scores.length ? scores[index].score : '-');
       }
       tableData.push(row);
     }
 
-    // Compute totals row
     const totalsRow: (string | number)[] = ['Total'];
-    players.forEach(player => {
+    players.forEach((player) => {
       const total = scores
-        .filter(entry => entry.player === player)
+        .filter((entry) => entry.player === player)
         .reduce((sum, entry) => sum + entry.score, 0);
       totalsRow.push(total);
     });
 
-    // Compute dynamic column width
     const screenWidth = Dimensions.get('window').width - 32;
     const totalColumns = players.length + 1;
     const minColumnWidth = 80;
@@ -100,6 +109,7 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ onBack }) => {
       totalColumns * minColumnWidth < screenWidth
         ? screenWidth / totalColumns
         : minColumnWidth;
+    const isDark = theme.primary === darkTheme.primary;
 
     return (
       <Modal
@@ -109,46 +119,63 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ onBack }) => {
         onRequestClose={() => setSelectedGame(null)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>Game Details</Text>
-            <Text style={styles.modalSubtitle}>Date: {selectedGame.date}</Text>
-            <Text style={styles.modalSubtitle}>Winner: {selectedGame.winner}</Text>
+          <View style={[styles.modalContainer, { backgroundColor: theme.modalBackground }]}>
+            <Text style={[styles.modalTitle, { color: theme.titleText }]}>Game Details</Text>
+            <Text style={[styles.modalSubtitle, { color: theme.text }]}>
+              Date: {selectedGame.date}
+            </Text>
+            <Text style={[styles.modalSubtitle, { color: theme.text }]}>
+              Winner: {selectedGame.winner}
+            </Text>
             <ScrollView horizontal>
-              <View style={styles.tableContainer}>
-                {/* Header Row */}
-                <View style={styles.tableRowHeader}>
+              <View style={[styles.tableContainer, { borderRadius: 8, overflow: 'hidden' }]}>
+                <View style={[styles.tableRowHeader, { backgroundColor: theme.tableHeader }]}>
                   <View style={[styles.tableCell, { width: computedColumnWidth }]}>
-                    <Text style={styles.headerText}>Round</Text>
+                    <Text style={[styles.headerText, { color: theme.text }]}>Round</Text>
                   </View>
                   {players.map((player, index) => (
                     <View key={index} style={[styles.tableCell, { width: computedColumnWidth }]}>
-                      <Text style={styles.headerText}>{player}</Text>
+                      <Text style={[styles.headerText, { color: theme.text }]}>{player}</Text>
                     </View>
                   ))}
                 </View>
-                {/* Data Rows */}
                 <ScrollView style={styles.tableBody}>
                   {tableData.map((row, rIndex) => (
-                    <View key={rIndex} style={styles.tableRow}>
+                    <View
+                      key={rIndex}
+                      style={[
+                        styles.tableRow,
+                        {
+                          borderColor: isDark
+                            ? theme.secondary
+                            : theme.secondary + '33',
+                        },
+                      ]}
+                    >
                       {row.map((cell, cIndex) => (
                         <View key={cIndex} style={[styles.tableCell, { width: computedColumnWidth }]}>
-                          <Text style={styles.cellText}>{cell}</Text>
+                          <Text style={[styles.cellText, { color: theme.text }]}>{cell}</Text>
                         </View>
                       ))}
                     </View>
                   ))}
                 </ScrollView>
-                {/* Totals Row */}
-                <View style={styles.totalsRow}>
+                <View style={[styles.totalsRow, { backgroundColor: theme.tableRowBorder }]}>
                   {totalsRow.map((cell, index) => (
                     <View key={index} style={[styles.tableCell, { width: computedColumnWidth }]}>
-                      <Text style={[styles.headerText, styles.totalText]}>{cell}</Text>
+                      <Text style={[styles.headerText, styles.totalText, { color: theme.text }]}>
+                        {cell}
+                      </Text>
                     </View>
                   ))}
                 </View>
               </View>
             </ScrollView>
-            <CustomButton title="Close" onPress={() => setSelectedGame(null)} style={styles.closeButton} />
+            <CustomButton
+              title="Close"
+              onPress={() => setSelectedGame(null)}
+              style={styles.closeButton}
+            />
           </View>
         </View>
       </Modal>
@@ -158,13 +185,15 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ onBack }) => {
   return (
     <>
       <Header onPress={onBack} />
-      <View style={styles.container}>
-        <Text style={styles.title}>Game History</Text>
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
+        <Text style={[styles.title, { color: theme.titleText }]}>Game History</Text>
         <ScrollView style={styles.historyList}>
           {history.length > 0 ? (
-            history.map(game => renderHistoryItem(game))
+            history.map((game) => renderHistoryItem(game))
           ) : (
-            <Text style={styles.noHistoryText}>No game history available.</Text>
+            <Text style={[styles.noHistoryText, { color: theme.text }]}>
+              No game history available.
+            </Text>
           )}
         </ScrollView>
         <CustomButton title="Back" onPress={onBack} style={styles.backButton} />
@@ -177,7 +206,6 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ onBack }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F7FA',
     padding: 16,
     alignItems: 'center',
   },
@@ -185,7 +213,6 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '700',
     marginBottom: 24,
-    color: '#333',
   },
   historyList: {
     flex: 1,
@@ -193,7 +220,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   historyItem: {
-    backgroundColor: '#fff',
     padding: 12,
     borderRadius: 8,
     marginBottom: 12,
@@ -203,20 +229,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 4,
-    color: '#333',
   },
   historyWinner: {
     fontSize: 16,
-    color: '#4A90E2',
   },
   historyPlayers: {
     fontSize: 16,
     marginTop: 4,
-    color: '#333',
   },
   noHistoryText: {
     fontSize: 16,
-    color: '#666',
     textAlign: 'center',
     marginVertical: 20,
   },
@@ -232,11 +254,9 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     width: '90%',
-    // Increased height for modal
     height: '70%',
-    backgroundColor: '#fff',
+    borderRadius: 8,
     padding: 24,
-    borderRadius: 10,
     elevation: 6,
     alignItems: 'center',
   },
@@ -244,26 +264,23 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: '700',
     marginBottom: 12,
-    color: '#333',
   },
   modalSubtitle: {
     fontSize: 18,
     marginBottom: 8,
-    color: '#333',
   },
   tableContainer: {
-    // Container for table (no extra margin/padding)
+    borderRadius: 8,
+    overflow: 'hidden',
   },
   tableRowHeader: {
     flexDirection: 'row',
-    backgroundColor: '#ddd',
     paddingVertical: 8,
     paddingHorizontal: 4,
   },
   tableRow: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderColor: '#eee',
     paddingVertical: 8,
     paddingHorizontal: 4,
   },
@@ -275,12 +292,10 @@ const styles = StyleSheet.create({
   headerText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#333',
     textAlign: 'center',
   },
   cellText: {
     fontSize: 16,
-    color: '#333',
     textAlign: 'center',
   },
   tableBody: {
@@ -288,7 +303,6 @@ const styles = StyleSheet.create({
   },
   totalsRow: {
     flexDirection: 'row',
-    backgroundColor: '#ccc',
     paddingVertical: 8,
     paddingHorizontal: 4,
   },

@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ThemeProvider } from './components/ThemeContext';
 import HomePage from './components/HomePage';
 import GameSetup from './components/GameSetup';
 import Scoreboard from './components/Scoreboard';
@@ -15,30 +16,25 @@ export default function App() {
   const [targetScore, setTargetScore] = useState<number>(10000);
   const [resumeGame, setResumeGame] = useState<boolean>(false);
 
-  // Navigate back to home and reset resumeGame flag.
   const goHome = () => {
     setCurrentPage('home');
     setResumeGame(false);
   };
 
-  // When New Game is selected from the Home page.
   const handleNewGame = () => {
     setResumeGame(false);
     setCurrentPage('setup');
   };
 
-  // When Continue Game is selected from the Home page.
   const handleContinueGame = () => {
     setResumeGame(true);
     setCurrentPage('scoreboard');
   };
 
-  // When Stats is selected from the Home page.
   const handleStats = () => {
     setCurrentPage('history');
   };
 
-  // Called when game setup is complete.
   const handleGameSetupComplete = (playersList: string[], target: number) => {
     setPlayers(playersList);
     setTargetScore(target);
@@ -46,7 +42,6 @@ export default function App() {
     setCurrentPage('scoreboard');
   };
 
-  // Called when a game is over and the user restarts.
   const handleRestart = () => {
     setPlayers([]);
     setTargetScore(10000);
@@ -54,7 +49,6 @@ export default function App() {
     setCurrentPage('home');
   };
 
-  // Temporary function to clear all local storage.
   const clearLocalStorage = async () => {
     try {
       await AsyncStorage.clear();
@@ -78,10 +72,7 @@ export default function App() {
       break;
     case 'setup':
       content = (
-        <GameSetup 
-          onStartGame={handleGameSetupComplete} 
-          headerOnPress={goHome}
-        />
+        <GameSetup onStartGame={handleGameSetupComplete} headerOnPress={goHome} />
       );
       break;
     case 'scoreboard':
@@ -105,9 +96,11 @@ export default function App() {
   }
 
   return (
-    <View style={styles.appContainer}>
-      {content}
-    </View>
+    <ThemeProvider>
+      <View style={styles.appContainer}>
+        {content}
+      </View>
+    </ThemeProvider>
   );
 }
 

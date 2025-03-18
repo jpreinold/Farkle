@@ -1,8 +1,9 @@
 // components/HomePage.tsx
-import React from 'react';
+import React, { useContext } from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
 import CustomButton from './CustomButton';
 import Header from './Header';
+import { ThemeContext } from './ThemeContext';
 
 interface HomePageProps {
   onNewGame: () => void;
@@ -12,11 +13,12 @@ interface HomePageProps {
 }
 
 const HomePage: React.FC<HomePageProps> = ({ onNewGame, onContinueGame, onStats, onClearData }) => {
+  const { theme } = useContext(ThemeContext);
   return (
     <>
       <Header onPress={onNewGame} onClearData={onClearData} />
-      <View style={styles.container}>
-        <Text style={styles.title}>Welcome to Farkle</Text>
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
+        <Text style={[styles.title, { color: theme.titleText }]}>Welcome to Farkle</Text>
         <Image 
           source={require('../assets/dice.png')}
           style={styles.diceImage}
@@ -35,7 +37,6 @@ const HomePage: React.FC<HomePageProps> = ({ onNewGame, onContinueGame, onStats,
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F7FA',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
@@ -43,12 +44,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '700',
-    marginBottom: 24,
-    color: '#333',
+    marginBottom: 0,
   },
   diceImage: {
     width: '80%',
-    marginBottom: 24,
+    marginBottom: 12,
   },
   buttonContainer: {
     width: '100%',

@@ -1,18 +1,20 @@
 // components/CustomButton.tsx
-import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, GestureResponderEvent } from 'react-native';
+import React, { useContext } from 'react';
+import { TouchableOpacity, Text, StyleSheet, GestureResponderEvent, StyleProp, ViewStyle } from 'react-native';
+import { ThemeContext } from './ThemeContext';
 
 interface CustomButtonProps {
   title: string;
   onPress: (event: GestureResponderEvent) => void;
   disabled?: boolean;
-  style?: object;
+  style?: StyleProp<ViewStyle>;
 }
 
 const CustomButton: React.FC<CustomButtonProps> = ({ title, onPress, disabled, style }) => {
+  const { theme } = useContext(ThemeContext);
   return (
     <TouchableOpacity
-      style={[styles.button, disabled && styles.buttonDisabled, style]}
+      style={[styles.button, { backgroundColor: theme.secondary }, disabled && styles.buttonDisabled, style]}
       onPress={onPress}
       disabled={disabled}
       activeOpacity={0.7}
@@ -24,7 +26,6 @@ const CustomButton: React.FC<CustomButtonProps> = ({ title, onPress, disabled, s
 
 const styles = StyleSheet.create({
   button: {
-    backgroundColor: '#4A90E2',
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
@@ -32,12 +33,12 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   buttonDisabled: {
-    backgroundColor: '#A0A0A0',
+    backgroundColor: '#A9CCE3',
   },
   buttonText: {
-    color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+    color: '#fff',
   },
 });
 

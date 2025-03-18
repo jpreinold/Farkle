@@ -1,5 +1,5 @@
 // components/Scoreboard.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { 
   View, 
   Text, 
@@ -15,6 +15,7 @@ import ScoreEntry from './ScoreEntry';
 import GameOverModal from './GameOverModal';
 import Header from './Header';
 import EditScoreModal from './EditScoreModal';
+import { ThemeContext, darkTheme } from './ThemeContext';
 
 interface Score {
   id: number;
@@ -38,6 +39,7 @@ const Scoreboard: React.FC<ScoreboardProps> = ({
   headerOnPress,
   continueGame = false,
 }) => {
+  const { theme } = useContext(ThemeContext);
   const [scores, setScores] = useState<Score[]>([]);
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
   const [gameOver, setGameOver] = useState(false);
@@ -45,17 +47,18 @@ const Scoreboard: React.FC<ScoreboardProps> = ({
   const [editingEntry, setEditingEntry] = useState<Score | null>(null);
 
   const currentPlayer = players[currentPlayerIndex];
+  const isDark = theme.primary === darkTheme.primary; // determine if dark mode
 
   // Calculate dynamic column width
-  const screenWidth = Dimensions.get('window').width - 32; // 16 padding each side
-  const totalColumns = players.length + 1; // "Round" column + one per player
+  const screenWidth = Dimensions.get('window').width - 32;
+  const totalColumns = players.length + 1;
   const minColumnWidth = 80;
   const computedColumnWidth =
     totalColumns * minColumnWidth < screenWidth
       ? screenWidth / totalColumns
       : minColumnWidth;
 
-  // Only load saved game state if continueGame is true.
+  // Load saved game state if continueGame is true.
   useEffect(() => {
     if (continueGame) {
       const loadGameState = async () => {
@@ -76,7 +79,7 @@ const Scoreboard: React.FC<ScoreboardProps> = ({
     }
   }, [continueGame]);
 
-  // Persist game state whenever it changes
+  // Persist game state whenever it changes.
   useEffect(() => {
     const saveGameState = async () => {
       try {
@@ -89,7 +92,7 @@ const Scoreboard: React.FC<ScoreboardProps> = ({
     saveGameState();
   }, [scores, currentPlayerIndex, gameOver, winner]);
 
-  // Check for game over condition
+  // Check for game over condition.
   useEffect(() => {
     const totals = players.reduce((acc, player) => {
       acc[player] = scores
@@ -113,7 +116,6 @@ const Scoreboard: React.FC<ScoreboardProps> = ({
   useEffect(() => {
     const saveGameHistory = async () => {
       if (gameOver) {
-        // Compute final totals for each player.
         const finalTotals = players.reduce((acc, player) => {
           acc[player] = scores
             .filter(entry => entry.player === player)
@@ -125,7 +127,6 @@ const Scoreboard: React.FC<ScoreboardProps> = ({
           .map(([player, total]) => ({ player, total }))
           .sort((a, b) => b.total - a.total);
 
-        // Create a game history record with complete data.
         const gameHistoryRecord = {
           id: Date.now().toString(),
           date: new Date().toLocaleString(),
@@ -151,7 +152,6 @@ const Scoreboard: React.FC<ScoreboardProps> = ({
     saveGameHistory();
   }, [gameOver, scores, players, winner, targetScore]);
 
-  // Add a score entry then switch player automatically.
   const addScoreEntry = (score: number, note: string) => {
     if (gameOver) return;
     const newEntry: Score = {
@@ -169,28 +169,25 @@ const Scoreboard: React.FC<ScoreboardProps> = ({
     setCurrentPlayerIndex((currentPlayerIndex + 1) % players.length);
   };
 
-  // Update a score entry after editing.
   const saveEditedEntry = (editedEntry: Score) => {
     setScores(scores.map(entry => (entry.id === editedEntry.id ? editedEntry : entry)));
     setEditingEntry(null);
   };
 
-  // Build table data: Each row represents a round.
-  // We assume scores are recorded in strict round-robin order.
-  const numPlayers = players.length;
-  const numRounds = Math.ceil(scores.length / numPlayers);
+  // Build table data (round-by-round scores).
+  const numRounds = Math.ceil(scores.length / players.length);
   const tableData: (string | number)[][] = [];
   for (let r = 0; r < numRounds; r++) {
     const row: (string | number)[] = [];
-    row.push(r + 1); // first cell is the round number
-    for (let j = 0; j < numPlayers; j++) {
-      const index = r * numPlayers + j;
+    row.push(r + 1);
+    for (let j = 0; j < players.length; j++) {
+      const index = r * players.length + j;
       row.push(index < scores.length ? scores[index].score : '-');
     }
     tableData.push(row);
   }
 
-  // Compute totals row for display in table.
+  // Totals row.
   const totalsRow: (string | number)[] = ["Total"];
   players.forEach(player => {
     const total = scores
@@ -199,7 +196,6 @@ const Scoreboard: React.FC<ScoreboardProps> = ({
     totalsRow.push(total);
   });
 
-  // Compute final totals and sorted final scores (for modal).
   const finalTotals = players.reduce((acc, player) => {
     acc[player] = scores
       .filter(entry => entry.player === player)
@@ -210,11 +206,9 @@ const Scoreboard: React.FC<ScoreboardProps> = ({
     .map(([player, total]) => ({ player, total }))
     .sort((a, b) => b.total - a.total);
 
-  // Function to handle tap on a table cell (if editable).
-  // We allow editing if the cell is not in the first column and contains a valid score.
   const handleCellPress = (rIndex: number, cIndex: number) => {
-    if (cIndex === 0) return; // don't allow editing the round number
-    const scoreIndex = rIndex * numPlayers + (cIndex - 1);
+    if (cIndex === 0) return;
+    const scoreIndex = rIndex * players.length + (cIndex - 1);
     if (scoreIndex < scores.length) {
       setEditingEntry(scores[scoreIndex]);
     }
@@ -223,24 +217,28 @@ const Scoreboard: React.FC<ScoreboardProps> = ({
   return (
     <>
       <Header onPress={headerOnPress} />
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
         <ScrollView horizontal>
-          <View>
-            {/* Header Row */}
-            <View style={styles.tableRowHeader}>
+          <View style={styles.tableContainer}>
+            <View style={[styles.tableRowHeader, { backgroundColor: theme.tableHeader }]}>
               <View style={[styles.tableCell, { width: computedColumnWidth }]}>
-                <Text style={styles.headerText}>Round</Text>
+                <Text style={[styles.headerText, { color: theme.text }]}>Round</Text>
               </View>
               {players.map((player, index) => (
                 <View key={index} style={[styles.tableCell, { width: computedColumnWidth }]}>
-                  <Text style={styles.headerText}>{player}</Text>
+                  <Text style={[styles.headerText, { color: theme.text }]}>{player}</Text>
                 </View>
               ))}
             </View>
-            {/* Data Rows */}
             <ScrollView style={styles.tableBody}>
               {tableData.map((row, rIndex) => (
-                <View key={rIndex} style={styles.tableRow}>
+                <View
+                  key={rIndex}
+                  style={[
+                    styles.tableRow,
+                    { borderColor: isDark ? theme.secondary : theme.secondary + '33' },
+                  ]}
+                >
                   {row.map((cell, cIndex) => (
                     <TouchableOpacity
                       key={cIndex}
@@ -248,30 +246,28 @@ const Scoreboard: React.FC<ScoreboardProps> = ({
                       activeOpacity={cIndex === 0 ? 1 : 0.7}
                       onPress={() => handleCellPress(rIndex, cIndex)}
                     >
-                      <Text style={styles.cellText}>{cell}</Text>
+                      <Text style={[styles.cellText, { color: theme.text }]}>{cell}</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
               ))}
             </ScrollView>
-            {/* Totals Row */}
-            <View style={styles.totalsRow}>
+            <View style={[styles.totalsRow, { backgroundColor: theme.tableRowBorder }]}>
               {totalsRow.map((cell, index) => (
                 <View key={index} style={[styles.tableCell, { width: computedColumnWidth }]}>
-                  <Text style={[styles.headerText, styles.totalText]}>{cell}</Text>
+                  <Text style={[styles.headerText, styles.totalText, { color: theme.text }]}>{cell}</Text>
                 </View>
               ))}
             </View>
           </View>
         </ScrollView>
 
-        {/* Score Entry Section wrapped in KeyboardAvoidingView */}
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={styles.entrySection}
           keyboardVerticalOffset={80}
         >
-          <Text style={styles.currentPlayerText}>
+          <Text style={[styles.currentPlayerText, { color: theme.text }]}>
             Current Player: {currentPlayer}
           </Text>
           <ScoreEntry onAddEntry={addScoreEntry} />
@@ -302,19 +298,20 @@ const Scoreboard: React.FC<ScoreboardProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F7FA',
     padding: 16,
+  },
+  tableContainer: {
+    borderRadius: 8,
+    overflow: 'hidden',
   },
   tableRowHeader: {
     flexDirection: 'row',
-    backgroundColor: '#ddd',
     paddingVertical: 8,
     paddingHorizontal: 4,
   },
   tableRow: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderColor: '#eee',
     paddingVertical: 8,
     paddingHorizontal: 4,
   },
@@ -326,20 +323,17 @@ const styles = StyleSheet.create({
   headerText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#333',
     textAlign: 'center',
   },
   cellText: {
     fontSize: 16,
-    color: '#333',
     textAlign: 'center',
   },
   tableBody: {
-    maxHeight: 400,
+    maxHeight: 250,
   },
   totalsRow: {
     flexDirection: 'row',
-    backgroundColor: '#ccc',
     paddingVertical: 8,
     paddingHorizontal: 4,
   },
@@ -353,8 +347,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     textAlign: 'center',
-    marginBottom: 12,
-    color: '#333',
+    marginBottom: 8,
   },
 });
 

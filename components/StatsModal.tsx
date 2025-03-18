@@ -1,6 +1,7 @@
 // components/StatsModal.tsx
-import React from 'react';
+import React, { useContext } from 'react';
 import { Modal, View, Text, Button, StyleSheet } from 'react-native';
+import { ThemeContext, darkTheme } from './ThemeContext';
 
 interface StatsModalProps {
   visible: boolean;
@@ -12,24 +13,37 @@ interface StatsModalProps {
 }
 
 const StatsModal: React.FC<StatsModalProps> = ({ visible, stats, onClose }) => {
+  const { theme } = useContext(ThemeContext);
+  const isDark = theme.primary === darkTheme.primary; // determine if dark mode
+  const playersArray = Object.keys(stats);
+
   return (
     <Modal visible={visible} animationType="slide" transparent>
       <View style={styles.modalOverlay}>
-        <View style={styles.modalContainer}>
-          <Text style={styles.title}>Game Statistics</Text>
-          {Object.keys(stats).map((player, index) => {
+        <View style={[styles.modalContainer, { backgroundColor: theme.modalBackground }]}>
+          <Text style={[styles.title, { color: theme.titleText }]}>Game Statistics</Text>
+          {playersArray.map((player, index) => {
             const { rounds, totalScore, average, highest } = stats[player];
             return (
-              <View key={index} style={styles.playerStats}>
-                <Text style={styles.playerName}>{player}</Text>
-                <Text>Rounds Played: {rounds}</Text>
-                <Text>Total Score: {totalScore}</Text>
-                <Text>Average Score: {average.toFixed(2)}</Text>
-                <Text>Highest Round: {highest}</Text>
+              <View
+                key={player}
+                style={[
+                  styles.playerStats,
+                  index !== playersArray.length - 1 && {
+                    borderBottomWidth: 1,
+                    borderBottomColor: isDark ? "#fff" : theme.primary,
+                  },
+                ]}
+              >
+                <Text style={[styles.playerName, { color: theme.text }]}>{player}</Text>
+                <Text style={{ color: theme.text }}>Rounds Played: {rounds}</Text>
+                <Text style={{ color: theme.text }}>Total Score: {totalScore}</Text>
+                <Text style={{ color: theme.text }}>Average Score: {average.toFixed(2)}</Text>
+                <Text style={{ color: theme.text }}>Highest Round: {highest}</Text>
               </View>
             );
           })}
-          <Button title="Close" onPress={onClose} />
+          <Button title="Close" onPress={onClose} color={theme.primary} />
         </View>
       </View>
     </Modal>
@@ -57,6 +71,7 @@ const styles = StyleSheet.create({
   },
   playerStats: {
     marginBottom: 12,
+    paddingVertical: 8,
   },
   playerName: {
     fontSize: 20,
