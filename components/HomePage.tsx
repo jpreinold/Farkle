@@ -10,31 +10,8 @@ const HomePage: React.FC = () => {
   const { theme } = useContext(ThemeContext);
   const navigate = useNavigate();
 
-  const handleNewGame = () => {
-    navigate('/setup');
-  };
-
-  const handleContinueGame = async () => {
-    // Check if there's a saved game state
-    try {
-      const savedState = await storage.getItem('GAME_STATE');
-      if (savedState) {
-        navigate('/scoreboard');
-      } else {
-        // Optionally show a message that no saved game exists
-        alert('No saved game found.');
-      }
-    } catch (error) {
-      console.error('Error checking for saved game:', error);
-    }
-  };
-
   const handleNewSimulation = () => {
     navigate('/game-setup');
-  };
-
-  const handleStats = () => {
-    navigate('/history');
   };
 
   const handleClearData = async () => {
@@ -96,50 +73,8 @@ const HomePage: React.FC = () => {
             }}
           >
             <CustomButton 
-              title="New Game" 
-              onPress={handleNewGame} 
-              style={{ width: '100%', marginBottom: 0 }} 
-            />
-          </div>
-
-          <div 
-            className="card card-hover"
-            style={{ 
-              backgroundColor: theme.cardBackground,
-              boxShadow: `0 4px 16px ${theme.shadowColor}`,
-            }}
-          >
-            <CustomButton 
               title="New Simulation" 
               onPress={handleNewSimulation} 
-              style={{ width: '100%', marginBottom: 0 }} 
-            />
-          </div>
-          
-          <div 
-            className="card card-hover"
-            style={{ 
-              backgroundColor: theme.cardBackground,
-              boxShadow: `0 4px 16px ${theme.shadowColor}`,
-            }}
-          >
-            <CustomButton 
-              title="Continue Game" 
-              onPress={handleContinueGame} 
-              style={{ width: '100%', marginBottom: 0 }} 
-            />
-          </div>
-          
-          <div 
-            className="card card-hover"
-            style={{ 
-              backgroundColor: theme.cardBackground,
-              boxShadow: `0 4px 16px ${theme.shadowColor}`,
-            }}
-          >
-            <CustomButton 
-              title="Stats" 
-              onPress={handleStats} 
               style={{ width: '100%', marginBottom: 0 }} 
             />
           </div>
