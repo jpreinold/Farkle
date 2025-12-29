@@ -13,47 +13,9 @@ export default defineConfig({
         "dice.png",
         "splash-icon.png",
         "adaptive-icon.png",
-        "manifest.webmanifest",
+        "manifest.json",
       ],
-      manifest: {
-        id: "/",
-        scope: "/",
-        start_url: "/?source=pwa",
-        name: "Farkle",
-        short_name: "Farkle",
-        description: "A dice game scorekeeper",
-        theme_color: "#2E86C1",
-        background_color: "#F0F8FF",
-        display: "standalone",
-        display_override: ["standalone"],
-        launch_handler: {
-          client_mode: "focus-existing",
-        },
-        orientation: "portrait",
-        icons: [
-          {
-            src: "/assets/icon.png",
-            sizes: "192x192",
-            type: "image/png",
-          },
-          {
-            src: "/assets/icon.png",
-            sizes: "256x256",
-            type: "image/png",
-          },
-          {
-            src: "/assets/icon.png",
-            sizes: "512x512",
-            type: "image/png",
-          },
-          {
-            src: "/assets/adaptive-icon.png",
-            sizes: "512x512",
-            type: "image/png",
-            purpose: "any maskable",
-          },
-        ],
-      },
+      manifest: false,
       workbox: {
         globPatterns: [
           "**/*.{js,css,html,ico,png,svg,json,webmanifest,woff2,ttf}",
