@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import CustomButton from './CustomButton';
 import Header from './Header';
 import { ThemeContext } from './ThemeContext';
-import storage from '../utils/storage';
+import { createSession } from '../utils/gameSessionStorage';
 
 const GameSetup: React.FC = () => {
   const { theme } = useContext(ThemeContext);
@@ -26,13 +26,11 @@ const GameSetup: React.FC = () => {
     const target = parseInt(targetScore, 10) || 10000;
 
     try {
-      const gameConfig = {
+      const session = await createSession({
         players,
         targetScore: target,
-      };
-      await storage.setItem('GAME_CONFIG', JSON.stringify(gameConfig));
-      await storage.removeItem('GAME_STATE');
-      navigate('/game');
+      });
+      navigate(`/game/${session.id}`);
     } catch (error) {
       console.error('Error saving game configuration:', error);
     }

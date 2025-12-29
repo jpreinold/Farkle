@@ -1,27 +1,90 @@
 // components/HomePage.tsx
-import React, { useContext } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CustomButton from './CustomButton';
 import Header from './Header';
 import { ThemeContext } from './ThemeContext';
 import storage from '../utils/storage';
+import Modal from './Modal';
+import { GameSessionSummary, listSessions } from '../utils/gameSessionStorage';
 
 const HomePage: React.FC = () => {
   const { theme } = useContext(ThemeContext);
   const navigate = useNavigate();
+  const [loadingSessions, setLoadingSessions] = useState(true);
+  const [unfinishedSessions, setUnfinishedSessions] = useState<GameSessionSummary[]>([]);
+  const [pickerVisible, setPickerVisible] = useState(false);
 
   const handleNewGame = () => {
     navigate('/game-setup');
   };
 
+  const refreshSessions = useCallback(async () => {
+    try {
+      setLoadingSessions(true);
+      const sessions = await listSessions();
+      setUnfinishedSessions(
+        sessions.filter((session) => session.status !== 'completed')
+      );
+    } catch (error) {
+      console.error('Failed to load sessions:', error);
+    } finally {
+      setLoadingSessions(false);
+    }
+  }, []);
+
   const handleClearData = async () => {
     try {
       await storage.clear();
       console.log('Local storage cleared.');
+      await refreshSessions();
     } catch (error) {
       console.error('Error clearing local storage:', error);
     }
   };
+
+  useEffect(() => {
+    refreshSessions();
+    const handleVisibility = () => {
+      if (!document.hidden) {
+        refreshSessions();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [refreshSessions]);
+
+  const handleContinueGame = () => {
+    if (unfinishedSessions.length === 0) {
+      return;
+    }
+    if (unfinishedSessions.length === 1) {
+      navigate(`/game/${unfinishedSessions[0].id}`);
+      return;
+    }
+    setPickerVisible(true);
+  };
+
+  const handleHistory = () => {
+    navigate('/history');
+  };
+
+  const handleSessionSelect = (sessionId: string) => {
+    setPickerVisible(false);
+    navigate(`/game/${sessionId}`);
+  };
+
+  const formatTimestamp = (value?: string | null) => {
+    if (!value) return 'Unknown time';
+    try {
+      return new Date(value).toLocaleString();
+    } catch {
+      return value;
+    }
+  };
+
   return (
     <>
       <Header onClearData={handleClearData} />
@@ -66,6 +129,24 @@ const HomePage: React.FC = () => {
         {/* Action Cards */}
         <div className="w-full max-w-md space-y-4 animate-slide-up">
           <div 
+            className="card card-hover space-y-2"
+            style={{ 
+              backgroundColor: theme.cardBackground,
+              boxShadow: `0 4px 16px ${theme.shadowColor}`,
+            }}
+          >
+            <CustomButton 
+              title={loadingSessions ? "Loading..." : "Continue Game"} 
+              onPress={handleContinueGame} 
+              disabled={loadingSessions || unfinishedSessions.length === 0}
+              style={{ width: '100%', marginBottom: 0 }} 
+            />
+            <p className="text-sm opacity-80" style={{ color: theme.text }}>
+              Resume where you left off. {unfinishedSessions.length === 0 ? 'No unfinished games detected.' : `${unfinishedSessions.length} in-progress match${unfinishedSessions.length > 1 ? 'es' : ''} available.`}
+            </p>
+          </div>
+
+          <div 
             className="card card-hover"
             style={{ 
               backgroundColor: theme.cardBackground,
@@ -78,8 +159,67 @@ const HomePage: React.FC = () => {
               style={{ width: '100%', marginBottom: 0 }} 
             />
           </div>
+
+          <div 
+            className="card card-hover"
+            style={{ 
+              backgroundColor: theme.cardBackground,
+              boxShadow: `0 4px 16px ${theme.shadowColor}`,
+            }}
+          >
+            <CustomButton 
+              title="History" 
+              onPress={handleHistory} 
+              style={{ width: '100%', marginBottom: 0 }} 
+              variant="outline"
+            />
+          </div>
         </div>
       </div>
+
+      <Modal
+        visible={pickerVisible}
+        onRequestClose={() => setPickerVisible(false)}
+        animationType="slide"
+      >
+        <div
+          className="w-[90vw] max-w-md rounded-2xl p-6 space-y-4"
+          style={{ backgroundColor: theme.cardBackground }}
+        >
+          <h3
+            className="text-xl font-semibold"
+            style={{ color: theme.titleText }}
+          >
+            Choose a game to continue
+          </h3>
+          <div className="space-y-3 max-h-80 overflow-y-auto">
+            {unfinishedSessions.map((session) => (
+              <button
+                key={session.id}
+                onClick={() => handleSessionSelect(session.id)}
+                className="w-full text-left p-4 rounded-xl border transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2"
+                style={{
+                  borderColor: theme.borderColor,
+                  backgroundColor: theme.background,
+                  color: theme.text,
+                }}
+              >
+                <p className="font-semibold">
+                  {session.players.join(', ') || 'Unnamed match'}
+                </p>
+                <p className="text-sm opacity-75">
+                  Updated {formatTimestamp(session.updatedAt)}
+                </p>
+              </button>
+            ))}
+          </div>
+          <CustomButton
+            title="Cancel"
+            onPress={() => setPickerVisible(false)}
+            style={{ width: '100%' }}
+          />
+        </div>
+      </Modal>
     </>
   );
 };

@@ -7,11 +7,10 @@ import React, {
   useCallback,
   useRef,
 } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Header from "./Header";
 import CustomButton from "./CustomButton";
 import { ThemeContext } from "./ThemeContext";
-import storage from "../utils/storage";
 import CompactPlayerScoreboard from "./CompactPlayerScoreboard";
 import TurnScoreDisplay from "./TurnScoreDisplay";
 import DiceGameCanvas from "./DiceGameCanvas";
@@ -21,6 +20,12 @@ import PlayerHistoryModal, { PlayerHistoryEntry } from "./PlayerHistoryModal";
 import EditScoreModal from "./EditScoreModal";
 import GameOverModal from "./GameOverModal";
 import { canScore, analyzeRoll, ScoringGroup } from "../utils/farkleScoring";
+import {
+  loadSession,
+  updateSessionState,
+  setActiveSession,
+  listSessions,
+} from "../utils/gameSessionStorage";
 
 type ScoreSource = "auto" | "manual";
 
@@ -37,6 +42,7 @@ type EditableScoreEntry = Omit<ScoreEntry, "source"> & { source?: ScoreSource };
 const Game: React.FC = () => {
   const { theme } = useContext(ThemeContext);
   const navigate = useNavigate();
+  const { gameId } = useParams<{ gameId: string }>();
 
   const [loading, setLoading] = useState(true);
   const [players, setPlayers] = useState<string[]>([]);
@@ -52,6 +58,7 @@ const Game: React.FC = () => {
     null
   );
   const [editingEntry, setEditingEntry] = useState<ScoreEntry | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
 
   const [availableDice, setAvailableDice] = useState(6);
   const [currentRoll, setCurrentRoll] = useState<number[]>([]);
@@ -87,66 +94,105 @@ const Game: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const loadGame = async () => {
-      try {
-        const config = await storage.getItem("GAME_CONFIG");
-        if (!config) {
-          navigate("/game-setup");
-          return;
-        }
-        const parsedConfig = JSON.parse(config);
-        if (!parsedConfig.players || parsedConfig.players.length === 0) {
-          navigate("/game-setup");
-          return;
-        }
-        setPlayers(parsedConfig.players);
-        setTargetScore(parsedConfig.targetScore || 10000);
+    const loadGameSession = async () => {
+      if (!gameId) {
+        navigate("/game-setup");
+        return;
+      }
 
-        const savedState = await storage.getItem("GAME_STATE");
-        if (savedState) {
-          const parsedState = JSON.parse(savedState);
-          const normalizedScores: ScoreEntry[] = (
-            (parsedState.scores || []) as ScoreEntry[]
-          ).map((entry, index) => ({
+      setLoading(true);
+      try {
+        const session = await loadSession(gameId);
+        if (
+          !session ||
+          !Array.isArray(session.players) ||
+          session.players.length === 0
+        ) {
+          navigate("/game-setup");
+          return;
+        }
+
+        const normalizedScores: ScoreEntry[] = (session.scores || []).map(
+          (entry, index) => ({
             id: entry?.id ?? index + 1,
             player: entry?.player || "",
             score: entry?.score || 0,
             note: entry?.note || "",
             source: entry?.source === "manual" ? "manual" : "auto",
-          }));
-          setScores(normalizedScores);
-          setCurrentPlayerIndex(parsedState.currentPlayerIndex || 0);
-          setGameOver(parsedState.gameOver || false);
-          setWinner(parsedState.winner || "");
-        }
+          })
+        );
+
+        setSessionId(session.id);
+        setPlayers(session.players);
+        setTargetScore(session.targetScore || 10000);
+        setScores(normalizedScores);
+        setCurrentPlayerIndex(session.currentPlayerIndex || 0);
+        setGameOver(session.gameOver || false);
+        setWinner(session.winner || "");
+        await setActiveSession(session.id);
       } catch (error) {
-        console.error("Error loading game state:", error);
+        console.error("Error loading game session:", error);
         navigate("/game-setup");
       } finally {
         setLoading(false);
       }
     };
 
-    loadGame();
-  }, [navigate]);
+    loadGameSession();
+  }, [gameId, navigate]);
 
   useEffect(() => {
-    if (players.length === 0) return;
+    if (!sessionId || players.length === 0) return;
     const saveState = async () => {
       try {
-        const state = {
+        await updateSessionState(sessionId, {
+          players,
+          targetScore,
           scores,
           currentPlayerIndex,
           gameOver,
           winner,
-        };
-        await storage.setItem("GAME_STATE", JSON.stringify(state));
+        });
       } catch (error) {
-        console.error("Error saving game state:", error);
+        console.error("Error saving game session:", error);
       }
     };
     saveState();
-  }, [scores, currentPlayerIndex, gameOver, winner, players.length]);
+  }, [
+    sessionId,
+    players,
+    targetScore,
+    scores,
+    currentPlayerIndex,
+    gameOver,
+    winner,
+  ]);
+
+  useEffect(() => {
+    if (!sessionId) return;
+    const syncActivePointer = async () => {
+      try {
+        if (gameOver) {
+          const sessions = await listSessions();
+          const unfinished = sessions.filter(
+            (item) => item.status !== "completed"
+          );
+          if (unfinished.length === 0) {
+            await setActiveSession(null);
+          } else if (unfinished.some((item) => item.id === sessionId)) {
+            await setActiveSession(sessionId);
+          } else {
+            await setActiveSession(unfinished[0].id);
+          }
+        } else {
+          await setActiveSession(sessionId);
+        }
+      } catch (error) {
+        console.error("Error syncing active session:", error);
+      }
+    };
+    syncActivePointer();
+  }, [gameOver, sessionId]);
 
   const playerTotals = useMemo(() => {
     const totals: Record<string, number> = {};
