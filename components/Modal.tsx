@@ -17,12 +17,34 @@ const Modal: React.FC<ModalProps> = ({
 }) => {
   useEffect(() => {
     // Prevent body scroll when modal is open
-    // Only apply overflow hidden, which shouldn't interfere with mobile keyboards
+    // Use a method that doesn't interfere with mobile keyboards
     if (visible) {
-      const originalOverflow = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
+      // Store original styles
+      const originalStyle = {
+        overflow: document.body.style.overflow,
+        position: document.body.style.position,
+        top: document.body.style.top,
+        width: document.body.style.width,
+      };
+      
+      // Only prevent scroll, but allow keyboard to appear
+      // Don't use overflow: hidden as it can block mobile keyboards
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      // Don't set overflow: hidden - let mobile handle it naturally
+      
       return () => {
-        document.body.style.overflow = originalOverflow;
+        // Restore original styles
+        document.body.style.position = originalStyle.position;
+        document.body.style.top = originalStyle.top;
+        document.body.style.width = originalStyle.width;
+        document.body.style.overflow = originalStyle.overflow;
+        // Restore scroll position
+        if (scrollY) {
+          window.scrollTo(0, scrollY);
+        }
       };
     }
   }, [visible]);

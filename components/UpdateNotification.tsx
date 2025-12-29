@@ -1,35 +1,40 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import Modal from './Modal';
 import CustomButton from './CustomButton';
 
 const UpdateNotification: React.FC = () => {
   const intervalMS = 60 * 60 * 1000; // Check for updates every hour
+  const [isClient, setIsClient] = useState(false);
+
+  // Only initialize on client side to avoid SSR issues
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const {
     offlineReady: [offlineReady, setOfflineReady],
     needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker,
   } = useRegisterSW({
+    immediate: true,
     onRegistered(r: ServiceWorkerRegistration | undefined) {
       // Check for updates periodically
-      r &&
+      if (r) {
         setInterval(() => {
           r.update();
         }, intervalMS);
+      }
     },
     onRegisterError(error: any) {
       console.error('SW registration error', error);
     },
   });
 
-  // Auto-dismiss offlineReady notification after a short delay
+  // Auto-dismiss offlineReady notification immediately (don't show it)
   useEffect(() => {
     if (offlineReady) {
-      const timer = setTimeout(() => {
-        setOfflineReady(false);
-      }, 2000); // Auto-dismiss after 2 seconds
-      return () => clearTimeout(timer);
+      setOfflineReady(false);
     }
   }, [offlineReady, setOfflineReady]);
 
@@ -43,11 +48,14 @@ const UpdateNotification: React.FC = () => {
   };
 
   // Only show modal when there's an actual update needed, not for offlineReady
-  const showModal = needRefresh;
+  // Also only render if we're on the client side
+  if (!isClient || !needRefresh) {
+    return null;
+  }
 
   return (
     <Modal
-      visible={showModal}
+      visible={true}
       onRequestClose={close}
       animationType="fade"
     >
