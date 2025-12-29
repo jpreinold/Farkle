@@ -54,6 +54,9 @@ const Game: React.FC = () => {
 
   const currentPlayer = players[currentPlayerIndex] || '';
 
+  const pendingGroupIdsRef = useRef<string[]>([]);
+  const pendingScoreRef = useRef(0);
+
   const resetTurnState = useCallback(() => {
     setAvailableDice(6);
     setCurrentRoll([]);
@@ -64,6 +67,8 @@ const Game: React.FC = () => {
     setIsRolling(false);
     setHasRolled(false);
     setFarkleOccurred(false);
+    pendingGroupIdsRef.current = [];
+    pendingScoreRef.current = 0;
   }, []);
 
   useEffect(() => {
@@ -147,9 +152,6 @@ const Game: React.FC = () => {
     return Array.from({ length: count }, () => Math.floor(Math.random() * 6) + 1);
   }, []);
 
-  const pendingGroupIdsRef = useRef<string[]>([]);
-  const pendingScoreRef = useRef(0);
-
   const executeRoll = useCallback((count: number) => {
     setIsRolling(true);
     setSelectedGroupIds([]);
@@ -195,7 +197,10 @@ const Game: React.FC = () => {
     }, 0);
   }, [selectedGroupIds, groupMap]);
 
-  const hasBankableSelection = selectedGroupIds.length > 0 && selectedScorePreview > 0;
+  const hasBankableSelection =
+    selectedGroupIds.length > 0
+      ? selectedScorePreview > 0
+      : pendingScoreRef.current > 0;
 
   const selectableIndexSet = useMemo(() => {
     const set = new Set<number>();
@@ -220,21 +225,37 @@ const Game: React.FC = () => {
   const addIndexToSelection = useCallback(
     (index: number) => {
       setSelectedGroupIds((prev) => {
-        const used = new Set<number>();
-        prev.forEach((id) => {
-          const group = groupMap.get(id);
-          group?.indices.forEach((idx) => used.add(idx));
-        });
-        const candidates = getGroupsForIndex(index).filter((group) =>
-          group.indices.every((idx) => !used.has(idx))
-        );
+        const candidates = getGroupsForIndex(index);
         if (!candidates.length) return prev;
-        candidates.sort(
+
+        const sortedCandidates = [...candidates].sort(
           (a, b) => b.score - a.score || a.indices.length - b.indices.length
         );
-        const chosen = candidates[0];
-        if (prev.includes(chosen.id)) return prev;
-        return [...prev, chosen.id];
+
+        for (const candidate of sortedCandidates) {
+          const conflicts = prev.filter((id) => {
+            const group = groupMap.get(id);
+            if (!group) return false;
+            return group.indices.some((idx) => candidate.indices.includes(idx));
+          });
+
+          const canReplace = conflicts.every((id) => {
+            const group = groupMap.get(id);
+            return group && group.indices.every((idx) => candidate.indices.includes(idx));
+          });
+
+          if (!canReplace && conflicts.length > 0) {
+            continue;
+          }
+
+          let next = prev.filter((id) => !conflicts.includes(id));
+          if (next.includes(candidate.id)) {
+            return next;
+          }
+          return [...next, candidate.id];
+        }
+
+        return prev;
       });
     },
     [getGroupsForIndex, groupMap]
@@ -297,6 +318,8 @@ const Game: React.FC = () => {
     setIndexGroupMap({});
     setHasRolled(false);
     setFarkleOccurred(false);
+    pendingGroupIdsRef.current = [];
+    pendingScoreRef.current = 0;
 
     return diceToRollNext;
   }, [
@@ -378,10 +401,18 @@ const Game: React.FC = () => {
 
   const handleEndTurn = useCallback(() => {
     if (gameOver) return;
-    const totalScore = turnScore + (selectedGroupIds.length > 0 ? selectedScorePreview : 0);
+    const additionalScore =
+      selectedGroupIds.length > 0 ? selectedScorePreview : pendingScoreRef.current;
+    const totalScore = turnScore + additionalScore;
     if (totalScore === 0) return;
     finalizeTurn(totalScore, 'Simulation');
-  }, [gameOver, turnScore, selectedGroupIds, selectedScorePreview, finalizeTurn]);
+  }, [
+    gameOver,
+    turnScore,
+    selectedGroupIds,
+    selectedScorePreview,
+    finalizeTurn,
+  ]);
 
   const handleFarkle = useCallback(() => {
     if (gameOver) return;
