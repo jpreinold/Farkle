@@ -18,6 +18,8 @@ const TurnScoreDisplay: React.FC<TurnScoreDisplayProps> = ({
   isHotDice,
 }) => {
   const { theme } = useContext(ThemeContext);
+  const combinedScore =
+    turnScore + (selectedScorePreview > 0 ? selectedScorePreview : 0);
 
   return (
     <div
@@ -32,7 +34,7 @@ const TurnScoreDisplay: React.FC<TurnScoreDisplayProps> = ({
         Current Turn · {currentPlayer || 'Player'}
       </p>
       <p className="text-4xl font-extrabold" style={{ color: theme.secondary }}>
-        {turnScore}
+        {combinedScore}
       </p>
       <div className="mt-2 text-sm" style={{ color: theme.text }}>
         {farkleOccurred && (
