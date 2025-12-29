@@ -62,7 +62,7 @@ const Header: React.FC<HeaderProps> = ({ onClearData }) => {
 
   return (
     <div
-      className="w-full shadow-md relative"
+      className="w-full shadow-md relative sticky top-0 z-50"
       style={{
         background: `linear-gradient(135deg, ${theme.primary} 0%, ${theme.secondary} 100%)`,
         paddingTop: 'env(safe-area-inset-top)',

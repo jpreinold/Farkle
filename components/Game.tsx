@@ -6,25 +6,21 @@ import React, {
   useMemo,
   useCallback,
   useRef,
-} from 'react';
-import { useNavigate } from 'react-router-dom';
-import Header from './Header';
-import CustomButton from './CustomButton';
-import { ThemeContext } from './ThemeContext';
-import storage from '../utils/storage';
-import CompactPlayerScoreboard from './CompactPlayerScoreboard';
-import TurnScoreDisplay from './TurnScoreDisplay';
-import DiceGameCanvas from './DiceGameCanvas';
-import GameActionButtons from './GameActionButtons';
-import ManualEntryPanel from './ManualEntryPanel';
-import GameOverModal from './GameOverModal';
-import {
-  canScore,
-  analyzeRoll,
-  ScoringGroup,
-} from '../utils/farkleScoring';
+} from "react";
+import { useNavigate } from "react-router-dom";
+import Header from "./Header";
+import CustomButton from "./CustomButton";
+import { ThemeContext } from "./ThemeContext";
+import storage from "../utils/storage";
+import CompactPlayerScoreboard from "./CompactPlayerScoreboard";
+import TurnScoreDisplay from "./TurnScoreDisplay";
+import DiceGameCanvas from "./DiceGameCanvas";
+import GameActionButtons from "./GameActionButtons";
+import ManualEntryPanel from "./ManualEntryPanel";
+import GameOverModal from "./GameOverModal";
+import { canScore, analyzeRoll, ScoringGroup } from "../utils/farkleScoring";
 
-type ScoreSource = 'auto' | 'manual';
+type ScoreSource = "auto" | "manual";
 
 interface ScoreEntry {
   id: number;
@@ -44,22 +40,24 @@ const Game: React.FC = () => {
   const [scores, setScores] = useState<ScoreEntry[]>([]);
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
   const [gameOver, setGameOver] = useState(false);
-  const [winner, setWinner] = useState('');
+  const [winner, setWinner] = useState("");
   const [isManualMode, setIsManualMode] = useState(false);
-  const [manualScoreInput, setManualScoreInput] = useState('');
-  const [manualNoteInput, setManualNoteInput] = useState('');
+  const [manualScoreInput, setManualScoreInput] = useState("");
+  const [manualNoteInput, setManualNoteInput] = useState("");
 
   const [availableDice, setAvailableDice] = useState(6);
   const [currentRoll, setCurrentRoll] = useState<number[]>([]);
   const [scoringGroups, setScoringGroups] = useState<ScoringGroup[]>([]);
-  const [indexGroupMap, setIndexGroupMap] = useState<Record<number, string[]>>({});
+  const [indexGroupMap, setIndexGroupMap] = useState<Record<number, string[]>>(
+    {}
+  );
   const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>([]);
   const [turnScore, setTurnScore] = useState(0);
   const [isRolling, setIsRolling] = useState(false);
   const [hasRolled, setHasRolled] = useState(false);
   const [farkleOccurred, setFarkleOccurred] = useState(false);
 
-  const currentPlayer = players[currentPlayerIndex] || '';
+  const currentPlayer = players[currentPlayerIndex] || "";
 
   const pendingGroupIdsRef = useRef<string[]>([]);
   const pendingScoreRef = useRef(0);
@@ -74,8 +72,8 @@ const Game: React.FC = () => {
     setIsRolling(false);
     setHasRolled(false);
     setFarkleOccurred(false);
-    setManualScoreInput('');
-    setManualNoteInput('');
+    setManualScoreInput("");
+    setManualNoteInput("");
     pendingGroupIdsRef.current = [];
     pendingScoreRef.current = 0;
   }, []);
@@ -83,39 +81,39 @@ const Game: React.FC = () => {
   useEffect(() => {
     const loadSimulation = async () => {
       try {
-        const config = await storage.getItem('GAME_CONFIG_SIMULATION');
+        const config = await storage.getItem("GAME_CONFIG_SIMULATION");
         if (!config) {
-          navigate('/game-setup');
+          navigate("/game-setup");
           return;
         }
         const parsedConfig = JSON.parse(config);
         if (!parsedConfig.players || parsedConfig.players.length === 0) {
-          navigate('/game-setup');
+          navigate("/game-setup");
           return;
         }
         setPlayers(parsedConfig.players);
         setTargetScore(parsedConfig.targetScore || 10000);
 
-        const savedState = await storage.getItem('GAME_STATE_SIMULATION');
+        const savedState = await storage.getItem("GAME_STATE_SIMULATION");
         if (savedState) {
           const parsedState = JSON.parse(savedState);
-          const normalizedScores: ScoreEntry[] = ((parsedState.scores || []) as ScoreEntry[]).map(
-            (entry, index) => ({
-              id: entry?.id ?? index + 1,
-              player: entry?.player || '',
-              score: entry?.score || 0,
-              note: entry?.note || '',
-              source: entry?.source === 'manual' ? 'manual' : 'auto',
-            })
-          );
+          const normalizedScores: ScoreEntry[] = (
+            (parsedState.scores || []) as ScoreEntry[]
+          ).map((entry, index) => ({
+            id: entry?.id ?? index + 1,
+            player: entry?.player || "",
+            score: entry?.score || 0,
+            note: entry?.note || "",
+            source: entry?.source === "manual" ? "manual" : "auto",
+          }));
           setScores(normalizedScores);
           setCurrentPlayerIndex(parsedState.currentPlayerIndex || 0);
           setGameOver(parsedState.gameOver || false);
-          setWinner(parsedState.winner || '');
+          setWinner(parsedState.winner || "");
         }
       } catch (error) {
-        console.error('Error loading simulation game state:', error);
-        navigate('/game-setup');
+        console.error("Error loading simulation game state:", error);
+        navigate("/game-setup");
       } finally {
         setLoading(false);
       }
@@ -134,9 +132,9 @@ const Game: React.FC = () => {
           gameOver,
           winner,
         };
-        await storage.setItem('GAME_STATE_SIMULATION', JSON.stringify(state));
+        await storage.setItem("GAME_STATE_SIMULATION", JSON.stringify(state));
       } catch (error) {
-        console.error('Error saving simulation game state:', error);
+        console.error("Error saving simulation game state:", error);
       }
     };
     saveState();
@@ -163,35 +161,41 @@ const Game: React.FC = () => {
       }
     }
     setGameOver(false);
-    setWinner('');
+    setWinner("");
   }, [players, playerTotals, targetScore]);
 
   const rollDiceValues = useCallback((count: number): number[] => {
-    return Array.from({ length: count }, () => Math.floor(Math.random() * 6) + 1);
+    return Array.from(
+      { length: count },
+      () => Math.floor(Math.random() * 6) + 1
+    );
   }, []);
 
-  const executeRoll = useCallback((count: number) => {
-    setIsRolling(true);
-    setSelectedGroupIds([]);
-    setFarkleOccurred(false);
-    const newRoll = rollDiceValues(count);
-    setCurrentRoll(newRoll);
-    const analysis = analyzeRoll(newRoll);
-    setScoringGroups(analysis.groups);
-    setIndexGroupMap(analysis.indexToGroupIds);
-    pendingGroupIdsRef.current = analysis.bestGroupIds;
-    pendingScoreRef.current = analysis.bestScore;
-    setHasRolled(true);
-    setTimeout(() => {
-      setIsRolling(false);
-      if (!canScore(newRoll)) {
-        setFarkleOccurred(true);
-        pendingGroupIdsRef.current = [];
-      } else if (pendingScoreRef.current > 0) {
-        setSelectedGroupIds(pendingGroupIdsRef.current);
-      }
-    }, 800);
-  }, [rollDiceValues]);
+  const executeRoll = useCallback(
+    (count: number) => {
+      setIsRolling(true);
+      setSelectedGroupIds([]);
+      setFarkleOccurred(false);
+      const newRoll = rollDiceValues(count);
+      setCurrentRoll(newRoll);
+      const analysis = analyzeRoll(newRoll);
+      setScoringGroups(analysis.groups);
+      setIndexGroupMap(analysis.indexToGroupIds);
+      pendingGroupIdsRef.current = analysis.bestGroupIds;
+      pendingScoreRef.current = analysis.bestScore;
+      setHasRolled(true);
+      setTimeout(() => {
+        setIsRolling(false);
+        if (!canScore(newRoll)) {
+          setFarkleOccurred(true);
+          pendingGroupIdsRef.current = [];
+        } else if (pendingScoreRef.current > 0) {
+          setSelectedGroupIds(pendingGroupIdsRef.current);
+        }
+      }, 800);
+    },
+    [rollDiceValues]
+  );
 
   const groupMap = useMemo(() => {
     const map = new Map<string, ScoringGroup>();
@@ -223,7 +227,9 @@ const Game: React.FC = () => {
     return Math.max(0, parsed);
   }, [manualScoreInput]);
 
-  const displaySelectedScorePreview = isManualMode ? manualPendingScore : selectedScorePreview;
+  const displaySelectedScorePreview = isManualMode
+    ? manualPendingScore
+    : selectedScorePreview;
 
   const hasBankableSelection =
     selectedGroupIds.length > 0
@@ -269,7 +275,10 @@ const Game: React.FC = () => {
 
           const canReplace = conflicts.every((id) => {
             const group = groupMap.get(id);
-            return group && group.indices.every((idx) => candidate.indices.includes(idx));
+            return (
+              group &&
+              group.indices.every((idx) => candidate.indices.includes(idx))
+            );
           });
 
           if (!canReplace && conflicts.length > 0) {
@@ -317,11 +326,13 @@ const Game: React.FC = () => {
           group?.indices.forEach((idx) => usedIndices.add(idx));
         });
 
-        const needsCoverage = desiredIndices.filter((idx) => !usedIndices.has(idx));
+        const needsCoverage = desiredIndices.filter(
+          (idx) => !usedIndices.has(idx)
+        );
 
         needsCoverage.forEach((idx) => {
           const candidates = getGroupsForIndex(idx).filter((candidate) =>
-            candidate.indices.every((i) => !usedIndices.has(i))
+            candidate.indices.every((i) => !usedIndices.has(i) && i !== index)
           );
           if (!candidates.length) {
             return;
@@ -364,12 +375,7 @@ const Game: React.FC = () => {
     pendingScoreRef.current = 0;
 
     return diceToRollNext;
-  }, [
-    selectedGroupIds,
-    selectedScorePreview,
-    selectedIndices,
-    availableDice,
-  ]);
+  }, [selectedGroupIds, selectedScorePreview, selectedIndices, availableDice]);
 
   const isHotDice = useMemo(() => {
     if (currentRoll.length === 0 || !hasRolled || isRolling) return false;
@@ -423,7 +429,7 @@ const Game: React.FC = () => {
   ]);
 
   const finalizeTurn = useCallback(
-    (scoreValue: number, note: string, source: ScoreSource = 'auto') => {
+    (scoreValue: number, note: string, source: ScoreSource = "auto") => {
       if (players.length === 0) return;
       const player = players[currentPlayerIndex];
       setScores((prev) => [
@@ -454,7 +460,7 @@ const Game: React.FC = () => {
     if (gameOver) return;
     if (manualPendingScore <= 0) return;
     setTurnScore((prev) => prev + manualPendingScore);
-    setManualScoreInput('');
+    setManualScoreInput("");
   }, [gameOver, manualPendingScore]);
 
   const handleManualSubmit = useCallback(() => {
@@ -462,14 +468,14 @@ const Game: React.FC = () => {
     const pendingScore = manualPendingScore;
     const totalScore = turnScore + pendingScore;
     if (totalScore === 0) return;
-    const note = manualNoteInput.trim() || 'Manual Entry';
-    finalizeTurn(totalScore, note, 'manual');
+    const note = manualNoteInput.trim() || "Manual Entry";
+    finalizeTurn(totalScore, note, "manual");
   }, [gameOver, manualPendingScore, turnScore, manualNoteInput, finalizeTurn]);
 
   const handleManualFarkle = useCallback(() => {
     if (gameOver) return;
-    const note = manualNoteInput.trim() || 'Manual Farkle';
-    finalizeTurn(0, note, 'manual');
+    const note = manualNoteInput.trim() || "Manual Farkle";
+    finalizeTurn(0, note, "manual");
   }, [gameOver, manualNoteInput, finalizeTurn]);
 
   const handleModeChange = useCallback(
@@ -484,10 +490,12 @@ const Game: React.FC = () => {
   const handleEndTurn = useCallback(() => {
     if (gameOver) return;
     const additionalScore =
-      selectedGroupIds.length > 0 ? selectedScorePreview : pendingScoreRef.current;
+      selectedGroupIds.length > 0
+        ? selectedScorePreview
+        : pendingScoreRef.current;
     const totalScore = turnScore + additionalScore;
     if (totalScore === 0) return;
-    finalizeTurn(totalScore, 'Simulation');
+    finalizeTurn(totalScore, "Simulation");
   }, [
     gameOver,
     turnScore,
@@ -498,7 +506,7 @@ const Game: React.FC = () => {
 
   const handleFarkle = useCallback(() => {
     if (gameOver) return;
-    finalizeTurn(0, 'Farkle');
+    finalizeTurn(0, "Farkle");
   }, [gameOver, finalizeTurn]);
 
   const canRoll =
@@ -519,21 +527,26 @@ const Game: React.FC = () => {
     hasRolled || isRolling
       ? currentRoll.length > 0
         ? currentRoll
-        : Array((availableDice === 0 ? 6 : availableDice)).fill(1)
+        : Array(availableDice === 0 ? 6 : availableDice).fill(1)
       : [];
 
-  const finalTotals = players.map((player) => ({
-    player,
-    total: playerTotals[player] || 0,
-  })).sort((a, b) => b.total - a.total);
+  const finalTotals = players
+    .map((player) => ({
+      player,
+      total: playerTotals[player] || 0,
+    }))
+    .sort((a, b) => b.total - a.total);
 
   const handleBackToSetup = () => {
-    navigate('/game-setup');
+    navigate("/game-setup");
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: theme.background }}>
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ backgroundColor: theme.background }}
+      >
         <p className="text-lg font-semibold" style={{ color: theme.text }}>
           Loading game...
         </p>
@@ -555,7 +568,7 @@ const Game: React.FC = () => {
           <CustomButton
             title="Go to Simulation Setup"
             onPress={handleBackToSetup}
-            style={{ minWidth: '220px' }}
+            style={{ minWidth: "220px" }}
           />
         </div>
       </>
@@ -563,7 +576,10 @@ const Game: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col min-h-screen" style={{ backgroundColor: theme.background }}>
+    <div
+      className="flex flex-col min-h-screen"
+      style={{ backgroundColor: theme.background }}
+    >
       <Header />
       <div className="flex-1 p-5 md:p-8 space-y-5">
         <CompactPlayerScoreboard
@@ -583,8 +599,10 @@ const Game: React.FC = () => {
               onClick={() => handleModeChange(false)}
               className="px-4 py-2 text-sm font-semibold transition-colors duration-200"
               style={{
-                backgroundColor: !isManualMode ? theme.secondary : theme.cardBackground,
-                color: !isManualMode ? '#ffffff' : theme.text,
+                backgroundColor: !isManualMode
+                  ? theme.secondary
+                  : theme.cardBackground,
+                color: !isManualMode ? "#ffffff" : theme.text,
               }}
             >
               Dice
@@ -594,8 +612,10 @@ const Game: React.FC = () => {
               onClick={() => handleModeChange(true)}
               className="px-4 py-2 text-sm font-semibold transition-colors duration-200"
               style={{
-                backgroundColor: isManualMode ? theme.secondary : theme.cardBackground,
-                color: isManualMode ? '#ffffff' : theme.text,
+                backgroundColor: isManualMode
+                  ? theme.secondary
+                  : theme.cardBackground,
+                color: isManualMode ? "#ffffff" : theme.text,
               }}
             >
               Manual
@@ -675,4 +695,3 @@ const Game: React.FC = () => {
 };
 
 export default Game;
-
