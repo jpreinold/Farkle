@@ -1,5 +1,5 @@
 // components/CompactPlayerScoreboard.tsx
-import React, { useContext } from 'react';
+import React, { useContext, useEffect, useRef } from 'react';
 import { ThemeContext } from './ThemeContext';
 
 interface CompactPlayerScoreboardProps {
@@ -16,13 +16,29 @@ const CompactPlayerScoreboard: React.FC<CompactPlayerScoreboardProps> = ({
   currentPlayerIndex,
 }) => {
   const { theme } = useContext(ThemeContext);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  useEffect(() => {
+    const currentPlayer = players[currentPlayerIndex];
+    if (!currentPlayer) return;
+    const card = cardRefs.current[currentPlayer];
+    const container = containerRef.current;
+    if (card && container) {
+      card.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center',
+      });
+    }
+  }, [currentPlayerIndex, players]);
 
   if (players.length === 0) {
     return null;
   }
 
   return (
-    <div className="w-full overflow-x-auto pb-2">
+    <div className="w-full overflow-x-auto pb-2" ref={containerRef}>
       <div className="flex gap-3 min-w-max">
         {players.map((player, index) => {
           const total = totals[player] ?? 0;
@@ -32,6 +48,9 @@ const CompactPlayerScoreboard: React.FC<CompactPlayerScoreboardProps> = ({
           return (
             <div
               key={player}
+              ref={(el) => {
+                cardRefs.current[player] = el;
+              }}
               className="min-w-[160px] rounded-2xl p-4 flex flex-col gap-2 transition-all duration-200"
               style={{
                 backgroundColor: isActive ? `${theme.secondary}20` : theme.cardBackground,
