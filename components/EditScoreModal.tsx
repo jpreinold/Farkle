@@ -1,8 +1,8 @@
 // components/EditScoreModal.tsx
 import React, { useState, useEffect, useContext } from 'react';
-import { Modal, View, Text, TextInput, StyleSheet } from 'react-native';
+import Modal from './Modal';
 import CustomButton from './CustomButton';
-import { ThemeContext, darkTheme } from './ThemeContext';
+import { ThemeContext } from './ThemeContext';
 
 interface Score {
   id: number;
@@ -38,81 +38,66 @@ const EditScoreModal: React.FC<EditScoreModalProps> = ({ visible, entry, onSave,
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onCancel}>
-      <View style={styles.modalOverlay}>
-        <View style={[styles.modalContainer, { backgroundColor: theme.background }]}>
-          <Text style={[styles.modalTitle, { color: theme.titleText }]}>Edit Score</Text>
-          <Text style={[styles.label, { color: theme.titleText }]}>Score:</Text>
-          <TextInput
-            style={[styles.input, { borderColor: theme.inputBorder, color: theme.text }]}
-            keyboardType="numeric"
-            value={score}
-            onChangeText={setScore}
-            placeholder="Enter score"
-            placeholderTextColor={theme.inputBorder}
-          />
-          <Text style={[styles.label, { color: theme.titleText }]}>Note:</Text>
-          <TextInput
-            style={[styles.input, { borderColor: theme.inputBorder, color: theme.text }]}
-            value={note}
-            onChangeText={setNote}
-            placeholder="Enter note"
-            placeholderTextColor={theme.inputBorder}
-          />
-          <View style={styles.buttonRow}>
-            <CustomButton title="Save" onPress={handleSave} style={styles.button} />
-            <CustomButton title="Cancel" onPress={onCancel} style={[styles.button, styles.cancelButton]} />
-          </View>
-        </View>
-      </View>
+    <Modal visible={visible} animationType="slide" onRequestClose={onCancel}>
+      <div
+        className="w-[85%] p-6 rounded-lg shadow-lg flex flex-col items-center"
+        style={{ backgroundColor: theme.background }}
+      >
+        <h2
+          className="text-xl font-bold mb-4"
+          style={{ color: theme.titleText }}
+        >
+          Edit Score
+        </h2>
+        <label
+          className="self-start text-base mb-1"
+          style={{ color: theme.titleText }}
+        >
+          Score:
+        </label>
+        <input
+          type="number"
+          className="w-full border rounded-md p-3 text-base mb-3"
+          style={{
+            borderColor: theme.inputBorder,
+            color: theme.text,
+          }}
+          value={score}
+          onChange={(e) => setScore(e.target.value)}
+          placeholder="Enter score"
+        />
+        <label
+          className="self-start text-base mb-1"
+          style={{ color: theme.titleText }}
+        >
+          Note:
+        </label>
+        <input
+          type="text"
+          className="w-full border rounded-md p-3 text-base mb-3"
+          style={{
+            borderColor: theme.inputBorder,
+            color: theme.text,
+          }}
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="Enter note"
+        />
+        <div className="flex flex-row justify-around w-full">
+          <div className="flex-1 mr-2">
+            <CustomButton title="Save" onPress={handleSave} />
+          </div>
+          <div className="flex-1 ml-2">
+            <CustomButton
+              title="Cancel"
+              onPress={onCancel}
+              style={{ backgroundColor: '#A0A0A0' }}
+            />
+          </div>
+        </div>
+      </div>
     </Modal>
   );
 };
-
-const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContainer: {
-    width: '85%',
-    padding: 24,
-    borderRadius: 10,
-    elevation: 6,
-    alignItems: 'center',
-  },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    marginBottom: 16,
-  },
-  label: {
-    alignSelf: 'flex-start',
-    fontSize: 16,
-    marginBottom: 4,
-  },
-  input: {
-    width: '100%',
-    borderWidth: 1,
-    borderRadius: 6,
-    padding: 12,
-    fontSize: 16,
-    marginBottom: 12,
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-  },
-  button: {
-    flex: 1,
-    marginHorizontal: 8,
-  },
-  cancelButton: {
-    backgroundColor: '#A0A0A0',
-  },
-});
 
 export default EditScoreModal;

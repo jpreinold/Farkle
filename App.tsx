@@ -1,7 +1,6 @@
 // App.tsx
 import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import storage from './utils/storage';
 import { ThemeProvider } from './components/ThemeContext';
 import HomePage from './components/HomePage';
 import GameSetup from './components/GameSetup';
@@ -51,7 +50,7 @@ export default function App() {
 
   const clearLocalStorage = async () => {
     try {
-      await AsyncStorage.clear();
+      await storage.clear();
       console.log('Local storage cleared.');
     } catch (error) {
       console.error('Error clearing local storage:', error);
@@ -92,20 +91,14 @@ export default function App() {
       );
       break;
     default:
-      content = <View />;
+      content = <div />;
   }
 
   return (
     <ThemeProvider>
-      <View style={styles.appContainer}>
+      <div className="flex flex-col min-h-screen">
         {content}
-      </View>
+      </div>
     </ThemeProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  appContainer: {
-    flex: 1,
-  },
-});

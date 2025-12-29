@@ -1,45 +1,35 @@
 // components/CustomButton.tsx
 import React, { useContext } from 'react';
-import { TouchableOpacity, Text, StyleSheet, GestureResponderEvent, StyleProp, ViewStyle } from 'react-native';
 import { ThemeContext } from './ThemeContext';
 
 interface CustomButtonProps {
   title: string;
-  onPress: (event: GestureResponderEvent) => void;
+  onPress: (event: React.MouseEvent<HTMLButtonElement>) => void;
   disabled?: boolean;
-  style?: StyleProp<ViewStyle>;
+  style?: React.CSSProperties | string;
 }
 
 const CustomButton: React.FC<CustomButtonProps> = ({ title, onPress, disabled, style }) => {
   const { theme } = useContext(ThemeContext);
+  
+  const baseClasses = "py-3 px-5 rounded-lg items-center mx-1 transition-opacity";
+  const disabledClasses = disabled ? "opacity-50 cursor-not-allowed bg-gray-400" : "";
+  
+  const buttonStyle: React.CSSProperties = {
+    backgroundColor: disabled ? '#A9CCE3' : theme.secondary,
+    ...(typeof style === 'object' ? style : {}),
+  };
+
   return (
-    <TouchableOpacity
-      style={[styles.button, { backgroundColor: theme.secondary }, disabled && styles.buttonDisabled, style]}
-      onPress={onPress}
+    <button
+      className={`${baseClasses} ${disabledClasses}`}
+      style={buttonStyle}
+      onClick={onPress}
       disabled={disabled}
-      activeOpacity={0.7}
     >
-      <Text style={styles.buttonText}>{title}</Text>
-    </TouchableOpacity>
+      <span className="text-base font-semibold text-white">{title}</span>
+    </button>
   );
 };
-
-const styles = StyleSheet.create({
-  button: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginHorizontal: 4,
-  },
-  buttonDisabled: {
-    backgroundColor: '#A9CCE3',
-  },
-  buttonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
-  },
-});
 
 export default CustomButton;

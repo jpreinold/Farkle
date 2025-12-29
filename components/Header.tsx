@@ -1,16 +1,8 @@
 // components/Header.tsx
 import React, { useState, useContext } from 'react';
-import {
-  SafeAreaView,
-  TouchableOpacity,
-  Text,
-  StyleSheet,
-  Platform,
-  View,
-  Modal,
-  ScrollView,
-} from 'react-native';
+import { IoMdSettings } from 'react-icons/io';
 import CustomButton from './CustomButton';
+import Modal from './Modal';
 import {
   ThemeContext,
   lightTheme,
@@ -21,7 +13,6 @@ import {
   greenTheme,
   pinkTheme,
 } from './ThemeContext';
-import { Ionicons } from '@expo/vector-icons';
 
 interface HeaderProps {
   onPress?: () => void;
@@ -46,146 +37,95 @@ const Header: React.FC<HeaderProps> = ({ onPress, onClearData }) => {
   const isDark = theme.primary === darkTheme.primary;
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.primary }]}>
-      <View style={styles.headerContainer}>
-        <TouchableOpacity onPress={onPress} style={styles.titleContainer}>
-          {/* Navigation title always white */}
-          <Text style={[styles.headerTitle, { color: '#fff' }]}>Farkle</Text>
-        </TouchableOpacity>
-        <View style={styles.rightButtons}>
+    <div
+      className="w-full"
+      style={{
+        backgroundColor: theme.primary,
+        paddingTop: 'env(safe-area-inset-top)',
+      }}
+    >
+      <div className="flex flex-row py-3 px-4 items-center justify-between">
+        <button onClick={onPress} className="flex-1 text-left">
+          <h1 className="text-2xl font-bold text-white">Farkle</h1>
+        </button>
+        <div className="flex flex-row items-center">
           {onClearData && (
-            <TouchableOpacity onPress={onClearData} style={styles.clearButton}>
-              <Text style={[styles.clearButtonText, { color: theme.primary }]}>
-                Clear Data
-              </Text>
-            </TouchableOpacity>
+            <button
+              onClick={onClearData}
+              className="bg-white py-1 px-2 rounded text-sm font-semibold mr-2"
+              style={{ color: theme.primary }}
+            >
+              Clear Data
+            </button>
           )}
-          <TouchableOpacity
-            onPress={() => setThemeModalVisible(true)}
-            style={styles.gearButton}
+          <button
+            onClick={() => setThemeModalVisible(true)}
+            className="p-1 text-white"
+            aria-label="Settings"
           >
-            <Ionicons name="settings-outline" size={28} color="#fff" />
-          </TouchableOpacity>
-        </View>
-      </View>
+            <IoMdSettings size={28} />
+          </button>
+        </div>
+      </div>
       <Modal
         visible={themeModalVisible}
-        transparent
-        animationType="slide"
         onRequestClose={() => setThemeModalVisible(false)}
+        animationType="slide"
       >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContainer, { backgroundColor: theme.modalBackground }]}>
-            <Text style={[styles.modalTitle, { color: theme.titleText }]}>
-              Choose a Theme
-            </Text>
-            <ScrollView>
-              {themes.map((item, index) => (
-                <TouchableOpacity
-                  key={index}
-                  onPress={() => {
-                    setTheme(item.theme);
-                    setThemeModalVisible(false);
-                  }}
-                  style={[
-                    styles.themeOption,
+        <div
+          className="w-[80%] rounded-lg p-4 flex flex-col items-center"
+          style={{ backgroundColor: theme.modalBackground }}
+        >
+          <h2
+            className="text-xl font-bold mb-3"
+            style={{ color: theme.titleText }}
+          >
+            Choose a Theme
+          </h2>
+          <div className="w-full max-h-96 overflow-y-auto">
+            {themes.map((item, index) => (
+              <button
+                key={index}
+                onClick={() => {
+                  setTheme(item.theme);
+                  setThemeModalVisible(false);
+                }}
+                className={`w-full py-2 px-3 text-left ${
+                  index !== themes.length - 1
+                    ? isDark
+                      ? 'border-b'
+                      : 'border-b border-opacity-20'
+                    : ''
+                }`}
+                style={{
+                  borderBottomColor:
                     index !== themes.length - 1
-                      ? {
-                          borderBottomWidth: 1,
-                          borderBottomColor: isDark
-                            ? theme.secondary
-                            : theme.secondary + '33',
-                        }
-                      : { borderBottomWidth: 0 },
-                  ]}
+                      ? isDark
+                        ? theme.secondary
+                        : theme.secondary + '33'
+                      : 'transparent',
+                }}
+              >
+                <span
+                  className="text-base text-center block w-full"
+                  style={{ color: theme.text }}
                 >
-                  <Text
-                    style={[
-                      styles.themeOptionText,
-                      { color: theme.text, textAlign: 'center' },
-                    ]}
-                  >
-                    {item.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+                  {item.name}
+                </span>
+              </button>
+            ))}
+          </div>
+          <div className="mt-3 w-full">
             <CustomButton
               title="Close"
               onPress={() => setThemeModalVisible(false)}
-              style={styles.modalCloseButton}
+              style={{ width: '100%' }}
             />
-          </View>
-        </View>
+          </div>
+        </div>
       </Modal>
-    </SafeAreaView>
+    </div>
   );
 };
-
-const styles = StyleSheet.create({
-  safeArea: {
-    backgroundColor: '#2E86C1',
-    paddingTop: Platform.OS === 'ios' ? 20 : 0,
-  },
-  headerContainer: {
-    flexDirection: 'row',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  titleContainer: {},
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-  },
-  rightButtons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  clearButton: {
-    backgroundColor: '#fff',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 4,
-    marginRight: 8,
-  },
-  clearButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  gearButton: {
-    padding: 4,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContainer: {
-    width: '80%',
-    borderRadius: 8,
-    padding: 16,
-    alignItems: 'center',
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    marginBottom: 12,
-  },
-  themeOption: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    width: '100%',
-  },
-  themeOptionText: {
-    fontSize: 16,
-  },
-  modalCloseButton: {
-    marginTop: 12,
-    width: '100%',
-  },
-});
 
 export default Header;

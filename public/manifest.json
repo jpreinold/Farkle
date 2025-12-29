@@ -1,0 +1,25 @@
+{
+  "name": "Farkle",
+  "short_name": "Farkle",
+  "description": "A dice game scorekeeper",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F0F8FF",
+  "theme_color": "#2E86C1",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/assets/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/adaptive-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
+

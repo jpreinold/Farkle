@@ -1,19 +1,18 @@
 // components/ScoreEntry.tsx
 import React, { useState } from 'react';
-import { View, TextInput, StyleSheet, Text } from 'react-native';
 import CustomButton from './CustomButton';
 
 interface ScoreEntryProps {
   onAddEntry: (score: number, note: string) => void;
+  currentPlayer: string;
 }
 
-const ScoreEntry: React.FC<ScoreEntryProps> = ({ onAddEntry }) => {
+const ScoreEntry: React.FC<ScoreEntryProps> = ({ onAddEntry, currentPlayer }) => {
   const [score, setScore] = useState('');
   const [note, setNote] = useState('');
 
   const handleEndTurn = () => {
     if (score.trim() === '') {
-      // No score entered, record as Farkle!
       onAddEntry(0, "Farkle");
     } else {
       const parsedScore = parseInt(score, 10);
@@ -21,10 +20,9 @@ const ScoreEntry: React.FC<ScoreEntryProps> = ({ onAddEntry }) => {
         onAddEntry(parsedScore, note);
       } else {
         console.warn('Enter a valid number for the score.');
-        return; // if invalid, do not clear the fields
+        return;
       }
     }
-    // Clear inputs after submission
     setScore('');
     setNote('');
   };
@@ -32,55 +30,31 @@ const ScoreEntry: React.FC<ScoreEntryProps> = ({ onAddEntry }) => {
   const buttonLabel = score.trim() === '' ? "Farkle!" : "End Turn";
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.label}>Score:</Text>
-      <TextInput
-        style={styles.input}
+    <div className="w-full p-4 bg-white rounded-t-3xl shadow-lg">
+      <p className="text-lg font-semibold mb-2 text-center text-gray-800">
+        Current Player: {currentPlayer}
+      </p>
+      <label className="text-base mb-1 block text-gray-800">Score:</label>
+      <input
+        type="number"
+        className="w-full border border-gray-300 rounded-md p-2.5 mb-3 text-base text-gray-800 bg-white"
         placeholder="Enter Score"
-        keyboardType="numeric"
         value={score}
-        onChangeText={setScore}
-        placeholderTextColor="#999"
-        accessibilityLabel="Score Input"
+        onChange={(e) => setScore(e.target.value)}
+        aria-label="Score Input"
       />
-      <Text style={styles.label}>Note (Optional):</Text>
-      <TextInput
-        style={styles.input}
+      <label className="text-base mb-1 block text-gray-800">Note (Optional):</label>
+      <input
+        type="text"
+        className="w-full border border-gray-300 rounded-md p-2.5 mb-3 text-base text-gray-800 bg-white"
         placeholder="Enter note"
         value={note}
-        onChangeText={setNote}
-        placeholderTextColor="#999"
-        accessibilityLabel="Note Input"
+        onChange={(e) => setNote(e.target.value)}
+        aria-label="Note Input"
       />
       <CustomButton title={buttonLabel} onPress={handleEndTurn} />
-    </View>
+    </div>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    padding: 16,
-    backgroundColor: '#fff',
-    marginHorizontal: 16,
-    borderRadius: 8,
-    marginBottom: 12,
-    elevation: 2,
-  },
-  label: {
-    fontSize: 16,
-    marginBottom: 4,
-    color: '#333',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 6,
-    padding: 10,
-    marginBottom: 12,
-    fontSize: 16,
-    color: '#333',
-    backgroundColor: '#fff',
-  },
-});
 
 export default ScoreEntry;

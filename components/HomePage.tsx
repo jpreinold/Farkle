@@ -1,6 +1,5 @@
 // components/HomePage.tsx
 import React, { useContext } from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
 import CustomButton from './CustomButton';
 import Header from './Header';
 import { ThemeContext } from './ThemeContext';
@@ -17,47 +16,30 @@ const HomePage: React.FC<HomePageProps> = ({ onNewGame, onContinueGame, onStats,
   return (
     <>
       <Header onPress={onNewGame} onClearData={onClearData} />
-      <View style={[styles.container, { backgroundColor: theme.background }]}>
-        <Text style={[styles.title, { color: theme.titleText }]}>Welcome to Farkle</Text>
-        <Image 
-          source={require('../assets/dice.png')}
-          style={styles.diceImage}
-          resizeMode="contain"
+      <div
+        className="flex-1 flex flex-col justify-center items-center p-4"
+        style={{ backgroundColor: theme.background }}
+      >
+        <h1
+          className="text-3xl font-bold mb-0"
+          style={{ color: theme.titleText }}
+        >
+          Welcome to Farkle
+        </h1>
+        <img
+          src="/assets/dice.png"
+          alt="Dice"
+          className="w-4/5 mb-3"
+          style={{ objectFit: 'contain' }}
         />
-        <View style={styles.buttonContainer}>
-          <CustomButton title="New Game" onPress={onNewGame} style={styles.button} />
-          <CustomButton title="Continue Game" onPress={onContinueGame} style={styles.button} />
-          <CustomButton title="Stats" onPress={onStats} style={styles.button} />
-        </View>
-      </View>
+        <div className="w-full flex flex-col items-center">
+          <CustomButton title="New Game" onPress={onNewGame} style={{ marginVertical: 12, width: '80%' }} />
+          <CustomButton title="Continue Game" onPress={onContinueGame} style={{ marginVertical: 12, width: '80%' }} />
+          <CustomButton title="Stats" onPress={onStats} style={{ marginVertical: 12, width: '80%' }} />
+        </div>
+      </div>
     </>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 16,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    marginBottom: 0,
-  },
-  diceImage: {
-    width: '80%',
-    marginBottom: 12,
-  },
-  buttonContainer: {
-    width: '100%',
-    alignItems: 'center',
-  },
-  button: {
-    marginVertical: 12,
-    width: '80%',
-  },
-});
 
 export default HomePage;

@@ -1,6 +1,7 @@
 // components/StatsModal.tsx
 import React, { useContext } from 'react';
-import { Modal, View, Text, Button, StyleSheet } from 'react-native';
+import Modal from './Modal';
+import CustomButton from './CustomButton';
 import { ThemeContext, darkTheme } from './ThemeContext';
 
 interface StatsModalProps {
@@ -14,69 +15,67 @@ interface StatsModalProps {
 
 const StatsModal: React.FC<StatsModalProps> = ({ visible, stats, onClose }) => {
   const { theme } = useContext(ThemeContext);
-  const isDark = theme.primary === darkTheme.primary; // determine if dark mode
+  const isDark = theme.primary === darkTheme.primary;
   const playersArray = Object.keys(stats);
 
   return (
-    <Modal visible={visible} animationType="slide" transparent>
-      <View style={styles.modalOverlay}>
-        <View style={[styles.modalContainer, { backgroundColor: theme.modalBackground }]}>
-          <Text style={[styles.title, { color: theme.titleText }]}>Game Statistics</Text>
-          {playersArray.map((player, index) => {
-            const { rounds, totalScore, average, highest } = stats[player];
-            return (
-              <View
-                key={player}
-                style={[
-                  styles.playerStats,
-                  index !== playersArray.length - 1 && {
-                    borderBottomWidth: 1,
-                    borderBottomColor: isDark ? "#fff" : theme.primary,
-                  },
-                ]}
+    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+      <div
+        className="w-[80%] p-4 rounded-lg"
+        style={{ backgroundColor: theme.modalBackground }}
+      >
+        <h2
+          className="text-2xl font-bold text-center mb-3"
+          style={{ color: theme.titleText }}
+        >
+          Game Statistics
+        </h2>
+        {playersArray.map((player, index) => {
+          const { rounds, totalScore, average, highest } = stats[player];
+          return (
+            <div
+              key={player}
+              className={`mb-3 py-2 ${
+                index !== playersArray.length - 1
+                  ? isDark
+                    ? 'border-b border-white'
+                    : 'border-b'
+                  : ''
+              }`}
+              style={{
+                borderBottomColor:
+                  index !== playersArray.length - 1
+                    ? isDark
+                      ? "#fff"
+                      : theme.primary
+                    : 'transparent',
+              }}
+            >
+              <p
+                className="text-xl font-bold mb-1"
+                style={{ color: theme.text }}
               >
-                <Text style={[styles.playerName, { color: theme.text }]}>{player}</Text>
-                <Text style={{ color: theme.text }}>Rounds Played: {rounds}</Text>
-                <Text style={{ color: theme.text }}>Total Score: {totalScore}</Text>
-                <Text style={{ color: theme.text }}>Average Score: {average.toFixed(2)}</Text>
-                <Text style={{ color: theme.text }}>Highest Round: {highest}</Text>
-              </View>
-            );
-          })}
-          <Button title="Close" onPress={onClose} color={theme.primary} />
-        </View>
-      </View>
+                {player}
+              </p>
+              <p style={{ color: theme.text }}>Rounds Played: {rounds}</p>
+              <p style={{ color: theme.text }}>Total Score: {totalScore}</p>
+              <p style={{ color: theme.text }}>
+                Average Score: {average.toFixed(2)}
+              </p>
+              <p style={{ color: theme.text }}>Highest Round: {highest}</p>
+            </div>
+          );
+        })}
+        <div className="mt-3">
+          <CustomButton
+            title="Close"
+            onPress={onClose}
+            style={{ backgroundColor: theme.primary, width: '100%' }}
+          />
+        </div>
+      </div>
     </Modal>
   );
 };
-
-const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContainer: {
-    width: '80%',
-    padding: 16,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 12,
-  },
-  playerStats: {
-    marginBottom: 12,
-    paddingVertical: 8,
-  },
-  playerName: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-});
 
 export default StatsModal;

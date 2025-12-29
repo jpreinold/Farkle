@@ -1,20 +1,11 @@
 // components/Scoreboard.tsx
 import React, { useState, useEffect, useContext } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  Dimensions,
-  KeyboardAvoidingView,
-  Platform,
-  TouchableOpacity
-} from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import storage from '../utils/storage';
 import ScoreEntry from './ScoreEntry';
 import GameOverModal from './GameOverModal';
 import Header from './Header';
 import EditScoreModal from './EditScoreModal';
+import CustomButton from './CustomButton';
 import { ThemeContext, darkTheme } from './ThemeContext';
 
 interface Score {
@@ -47,23 +38,14 @@ const Scoreboard: React.FC<ScoreboardProps> = ({
   const [editingEntry, setEditingEntry] = useState<Score | null>(null);
 
   const currentPlayer = players[currentPlayerIndex];
-  const isDark = theme.primary === darkTheme.primary; // determine if dark mode
-
-  // Calculate dynamic column width
-  const screenWidth = Dimensions.get('window').width - 32;
-  const totalColumns = players.length + 1;
-  const minColumnWidth = 80;
-  const computedColumnWidth =
-    totalColumns * minColumnWidth < screenWidth
-      ? screenWidth / totalColumns
-      : minColumnWidth;
+  const isDark = theme.primary === darkTheme.primary;
 
   // Load saved game state if continueGame is true.
   useEffect(() => {
     if (continueGame) {
       const loadGameState = async () => {
         try {
-          const savedState = await AsyncStorage.getItem('GAME_STATE');
+          const savedState = await storage.getItem('GAME_STATE');
           if (savedState !== null) {
             const state = JSON.parse(savedState);
             setScores(state.scores || []);
@@ -84,7 +66,7 @@ const Scoreboard: React.FC<ScoreboardProps> = ({
     const saveGameState = async () => {
       try {
         const state = { scores, currentPlayerIndex, gameOver, winner };
-        await AsyncStorage.setItem('GAME_STATE', JSON.stringify(state));
+        await storage.setItem('GAME_STATE', JSON.stringify(state));
       } catch (error) {
         console.error('Error saving game state', error);
       }
@@ -138,10 +120,10 @@ const Scoreboard: React.FC<ScoreboardProps> = ({
         };
 
         try {
-          const existingHistory = await AsyncStorage.getItem('GAME_HISTORY');
+          const existingHistory = await storage.getItem('GAME_HISTORY');
           const historyArray = existingHistory ? JSON.parse(existingHistory) : [];
           historyArray.push(gameHistoryRecord);
-          await AsyncStorage.setItem('GAME_HISTORY', JSON.stringify(historyArray));
+          await storage.setItem('GAME_HISTORY', JSON.stringify(historyArray));
           console.log('Game history saved.');
         } catch (error) {
           console.error('Error saving game history', error);
@@ -214,141 +196,145 @@ const Scoreboard: React.FC<ScoreboardProps> = ({
     }
   };
 
+  // Calculate column width based on viewport
+  const calculateColumnWidth = () => {
+    const screenWidth = window.innerWidth - 32;
+    const totalColumns = players.length + 1;
+    const minColumnWidth = 80;
+    return totalColumns * minColumnWidth < screenWidth
+      ? screenWidth / totalColumns
+      : minColumnWidth;
+  };
+
+  const [columnWidth, setColumnWidth] = useState(calculateColumnWidth());
+
+  useEffect(() => {
+    const handleResize = () => {
+      setColumnWidth(calculateColumnWidth());
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [players.length]);
+
   return (
-    <>
+    <div className="flex flex-col relative min-h-screen">
       <Header onPress={headerOnPress} />
-      <View style={[styles.container, { backgroundColor: theme.background }]}>
-        <ScrollView horizontal>
-          <View style={styles.tableContainer}>
-            <View style={[styles.tableRowHeader, { backgroundColor: theme.tableHeader }]}>
-              <View style={[styles.tableCell, { width: computedColumnWidth }]}>
-                <Text style={[styles.headerText, { color: theme.text }]}>Round</Text>
-              </View>
+      <div
+        className="flex-1 p-4 pb-72"
+        style={{ backgroundColor: theme.background }}
+      >
+        <div className="overflow-x-auto">
+          <div className="rounded-lg overflow-hidden inline-block min-w-full">
+            <div
+              className="flex flex-row py-2 px-1"
+              style={{ backgroundColor: theme.tableHeader }}
+            >
+              <div
+                className="flex justify-center items-center p-1"
+                style={{ width: columnWidth }}
+              >
+                <span
+                  className="text-base font-bold text-center"
+                  style={{ color: theme.text }}
+                >
+                  Round
+                </span>
+              </div>
               {players.map((player, index) => (
-                <View key={index} style={[styles.tableCell, { width: computedColumnWidth }]}>
-                  <Text style={[styles.headerText, { color: theme.text }]}>{player}</Text>
-                </View>
+                <div
+                  key={index}
+                  className="flex justify-center items-center p-1"
+                  style={{ width: columnWidth }}
+                >
+                  <span
+                    className="text-base font-bold text-center"
+                    style={{ color: theme.text }}
+                  >
+                    {player}
+                  </span>
+                </div>
               ))}
-            </View>
-            <ScrollView style={styles.tableBody}>
+            </div>
+            <div className="max-h-[250px] overflow-y-auto">
               {tableData.map((row, rIndex) => (
-                <View
+                <div
                   key={rIndex}
-                  style={[
-                    styles.tableRow,
-                    { borderColor: isDark ? theme.secondary : theme.secondary + '33' },
-                  ]}
+                  className={`flex flex-row py-2 px-1 border-b ${
+                    isDark ? '' : 'border-opacity-20'
+                  }`}
+                  style={{
+                    borderBottomColor: isDark
+                      ? theme.secondary
+                      : theme.secondary + '33',
+                  }}
                 >
                   {row.map((cell, cIndex) => (
-                    <TouchableOpacity
+                    <button
                       key={cIndex}
-                      style={[styles.tableCell, { width: computedColumnWidth }]}
-                      activeOpacity={cIndex === 0 ? 1 : 0.7}
-                      onPress={() => handleCellPress(rIndex, cIndex)}
+                      className={`flex justify-center items-center p-1 ${
+                        cIndex === 0 ? 'cursor-default' : 'cursor-pointer hover:opacity-70'
+                      }`}
+                      style={{ width: columnWidth }}
+                      onClick={() => handleCellPress(rIndex, cIndex)}
                     >
-                      <Text style={[styles.cellText, { color: theme.text }]}>{cell}</Text>
-                    </TouchableOpacity>
+                      <span
+                        className="text-base text-center"
+                        style={{ color: theme.text }}
+                      >
+                        {cell}
+                      </span>
+                    </button>
                   ))}
-                </View>
+                </div>
               ))}
-            </ScrollView>
-            <View style={[styles.totalsRow, { backgroundColor: theme.tableRowBorder }]}>
+            </div>
+            <div
+              className="flex flex-row py-2 px-1"
+              style={{ backgroundColor: theme.tableRowBorder }}
+            >
               {totalsRow.map((cell, index) => (
-                <View key={index} style={[styles.tableCell, { width: computedColumnWidth }]}>
-                  <Text style={[styles.headerText, styles.totalText, { color: theme.text }]}>{cell}</Text>
-                </View>
+                <div
+                  key={index}
+                  className="flex justify-center items-center p-1"
+                  style={{ width: columnWidth }}
+                >
+                  <span
+                    className="text-base font-bold text-center"
+                    style={{ color: theme.text }}
+                  >
+                    {cell}
+                  </span>
+                </div>
               ))}
-            </View>
-          </View>
-        </ScrollView>
-
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={styles.entrySection}
-          keyboardVerticalOffset={80}
-        >
-          <Text style={[styles.currentPlayerText, { color: theme.text }]}>
-            Current Player: {currentPlayer}
-          </Text>
-          <ScoreEntry onAddEntry={addScoreEntry} />
-        </KeyboardAvoidingView>
-
-        {gameOver && (
-          <GameOverModal
-            visible={gameOver}
-            winner={winner}
-            finalScores={sortedFinalScores}
-            onRestart={onRestart}
-          />
-        )}
-
-        {editingEntry && (
-          <EditScoreModal
-            visible={true}
-            entry={editingEntry}
-            onSave={saveEditedEntry}
-            onCancel={() => setEditingEntry(null)}
-          />
-        )}
-      </View>
-    </>
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* Footer with score entry */}
+      <div 
+        className="fixed bottom-0 left-0 right-0 transition-all duration-250 z-40"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
+        <ScoreEntry onAddEntry={addScoreEntry} currentPlayer={currentPlayer} />
+      </div>
+      {gameOver && (
+        <GameOverModal
+          visible={gameOver}
+          winner={winner}
+          finalScores={sortedFinalScores}
+          onRestart={onRestart}
+        />
+      )}
+      {editingEntry && (
+        <EditScoreModal
+          visible={true}
+          entry={editingEntry}
+          onSave={saveEditedEntry}
+          onCancel={() => setEditingEntry(null)}
+        />
+      )}
+    </div>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-  },
-  tableContainer: {
-    borderRadius: 8,
-    overflow: 'hidden',
-  },
-  tableRowHeader: {
-    flexDirection: 'row',
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-  },
-  tableRow: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-  },
-  tableCell: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 4,
-  },
-  headerText: {
-    fontSize: 16,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  cellText: {
-    fontSize: 16,
-    textAlign: 'center',
-  },
-  tableBody: {
-    maxHeight: 250,
-  },
-  totalsRow: {
-    flexDirection: 'row',
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-  },
-  totalText: {
-    fontWeight: '700',
-  },
-  entrySection: {
-    paddingVertical: 16,
-  },
-  currentPlayerText: {
-    fontSize: 18,
-    fontWeight: '600',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-});
 
 export default Scoreboard;
