@@ -9,6 +9,7 @@ interface Score {
   player: string;
   score: number;
   note: string;
+  source?: 'auto' | 'manual';
 }
 
 interface EditScoreModalProps {

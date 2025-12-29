@@ -1,12 +1,13 @@
 // components/CompactPlayerScoreboard.tsx
-import React, { useContext, useEffect, useRef } from 'react';
-import { ThemeContext } from './ThemeContext';
+import React, { useContext, useEffect, useRef } from "react";
+import { ThemeContext } from "./ThemeContext";
 
 interface CompactPlayerScoreboardProps {
   players: string[];
   totals: Record<string, number>;
   targetScore: number;
   currentPlayerIndex: number;
+  onPlayerClick?: (player: string) => void;
 }
 
 const CompactPlayerScoreboard: React.FC<CompactPlayerScoreboardProps> = ({
@@ -14,6 +15,7 @@ const CompactPlayerScoreboard: React.FC<CompactPlayerScoreboardProps> = ({
   totals,
   targetScore,
   currentPlayerIndex,
+  onPlayerClick,
 }) => {
   const { theme } = useContext(ThemeContext);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -26,9 +28,9 @@ const CompactPlayerScoreboard: React.FC<CompactPlayerScoreboardProps> = ({
     const container = containerRef.current;
     if (card && container) {
       card.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest',
-        inline: 'center',
+        behavior: "smooth",
+        block: "nearest",
+        inline: "center",
       });
     }
   }, [currentPlayerIndex, players]);
@@ -51,11 +53,41 @@ const CompactPlayerScoreboard: React.FC<CompactPlayerScoreboardProps> = ({
               ref={(el) => {
                 cardRefs.current[player] = el;
               }}
-              className="min-w-[160px] rounded-2xl p-4 flex flex-col gap-2 transition-all duration-200"
+              className={`min-w-[160px] rounded-2xl p-4 flex flex-col gap-2 transition-all duration-200 ${
+                onPlayerClick
+                  ? "cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2"
+                  : ""
+              }`}
               style={{
-                backgroundColor: isActive ? `${theme.secondary}20` : theme.cardBackground,
-                border: `2px solid ${isActive ? theme.secondary : theme.borderColor}`,
+                backgroundColor: isActive
+                  ? `${theme.secondary}20`
+                  : theme.cardBackground,
+                border: `2px solid ${
+                  isActive ? theme.secondary : theme.borderColor
+                }`,
                 boxShadow: `0 4px 12px ${theme.shadowColor}`,
+                ...(onPlayerClick
+                  ? ({
+                      "--tw-ring-color": theme.secondary,
+                    } as React.CSSProperties)
+                  : {}),
+              }}
+              role={onPlayerClick ? "button" : undefined}
+              tabIndex={onPlayerClick ? 0 : -1}
+              aria-label={
+                onPlayerClick ? `View history for ${player}` : undefined
+              }
+              onClick={() => {
+                if (onPlayerClick) {
+                  onPlayerClick(player);
+                }
+              }}
+              onKeyDown={(event) => {
+                if (!onPlayerClick) return;
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  onPlayerClick(player);
+                }
               }}
             >
               <div className="flex items-center justify-between">
@@ -74,7 +106,10 @@ const CompactPlayerScoreboard: React.FC<CompactPlayerScoreboardProps> = ({
                   </span>
                 )}
               </div>
-              <div className="text-2xl font-extrabold" style={{ color: theme.primary }}>
+              <div
+                className="text-2xl font-extrabold"
+                style={{ color: theme.primary }}
+              >
                 {total}
               </div>
               <div
@@ -101,4 +136,3 @@ const CompactPlayerScoreboard: React.FC<CompactPlayerScoreboardProps> = ({
 };
 
 export default CompactPlayerScoreboard;
-

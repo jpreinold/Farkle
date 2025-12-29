@@ -17,6 +17,8 @@ import TurnScoreDisplay from "./TurnScoreDisplay";
 import DiceGameCanvas from "./DiceGameCanvas";
 import GameActionButtons from "./GameActionButtons";
 import ManualEntryPanel from "./ManualEntryPanel";
+import PlayerHistoryModal, { PlayerHistoryEntry } from "./PlayerHistoryModal";
+import EditScoreModal from "./EditScoreModal";
 import GameOverModal from "./GameOverModal";
 import { canScore, analyzeRoll, ScoringGroup } from "../utils/farkleScoring";
 
@@ -29,6 +31,8 @@ interface ScoreEntry {
   note: string;
   source: ScoreSource;
 }
+
+type EditableScoreEntry = Omit<ScoreEntry, "source"> & { source?: ScoreSource };
 
 const Game: React.FC = () => {
   const { theme } = useContext(ThemeContext);
@@ -44,6 +48,10 @@ const Game: React.FC = () => {
   const [isManualMode, setIsManualMode] = useState(false);
   const [manualScoreInput, setManualScoreInput] = useState("");
   const [manualNoteInput, setManualNoteInput] = useState("");
+  const [historyModalPlayer, setHistoryModalPlayer] = useState<string | null>(
+    null
+  );
+  const [editingEntry, setEditingEntry] = useState<ScoreEntry | null>(null);
 
   const [availableDice, setAvailableDice] = useState(6);
   const [currentRoll, setCurrentRoll] = useState<number[]>([]);
@@ -150,6 +158,20 @@ const Game: React.FC = () => {
     });
     return totals;
   }, [players, scores]);
+
+  const playerHistoryEntries = useMemo<PlayerHistoryEntry[]>(() => {
+    if (!historyModalPlayer) return [];
+    return scores
+      .map((entry, index) => ({
+        ...entry,
+        sequence: index + 1,
+        round:
+          players.length > 0
+            ? Math.floor(index / players.length) + 1
+            : index + 1,
+      }))
+      .filter((entry) => entry.player === historyModalPlayer);
+  }, [historyModalPlayer, scores, players.length]);
 
   useEffect(() => {
     if (players.length === 0) return;
@@ -478,6 +500,51 @@ const Game: React.FC = () => {
     finalizeTurn(0, note, "manual");
   }, [gameOver, manualNoteInput, finalizeTurn]);
 
+  const handlePlayerHistoryOpen = useCallback((player: string) => {
+    setHistoryModalPlayer(player);
+  }, []);
+
+  const handlePlayerHistoryClose = useCallback(() => {
+    setHistoryModalPlayer(null);
+  }, []);
+
+  const handleHistoryEntryEditRequest = useCallback(
+    (entryId: number) => {
+      const entry = scores.find((item) => item.id === entryId);
+      if (entry) {
+        setEditingEntry(entry);
+      }
+    },
+    [scores]
+  );
+
+  const handleHistoryEntryDelete = useCallback((entryId: number) => {
+    const confirmDelete =
+      typeof window !== "undefined"
+        ? window.confirm("Delete this entry?")
+        : true;
+    if (!confirmDelete) return;
+    setScores((prev) => prev.filter((entry) => entry.id !== entryId));
+  }, []);
+
+  const handleEditedEntrySave = useCallback(
+    (updatedEntry: EditableScoreEntry) => {
+      setScores((prev) =>
+        prev.map((entry) =>
+          entry.id === updatedEntry.id
+            ? { ...entry, score: updatedEntry.score, note: updatedEntry.note }
+            : entry
+        )
+      );
+      setEditingEntry(null);
+    },
+    []
+  );
+
+  const handleEditCancel = useCallback(() => {
+    setEditingEntry(null);
+  }, []);
+
   const handleModeChange = useCallback(
     (manual: boolean) => {
       if (manual === isManualMode) return;
@@ -587,6 +654,7 @@ const Game: React.FC = () => {
           totals={playerTotals}
           targetScore={targetScore}
           currentPlayerIndex={currentPlayerIndex}
+          onPlayerClick={handlePlayerHistoryOpen}
         />
 
         <div className="flex justify-center">
@@ -688,6 +756,26 @@ const Game: React.FC = () => {
           winner={winner}
           finalScores={finalTotals}
           onRestart={handleBackToSetup}
+        />
+      )}
+
+      {historyModalPlayer && (
+        <PlayerHistoryModal
+          visible={Boolean(historyModalPlayer)}
+          player={historyModalPlayer}
+          entries={playerHistoryEntries}
+          onClose={handlePlayerHistoryClose}
+          onEdit={handleHistoryEntryEditRequest}
+          onDelete={handleHistoryEntryDelete}
+        />
+      )}
+
+      {editingEntry && (
+        <EditScoreModal
+          visible={Boolean(editingEntry)}
+          entry={editingEntry}
+          onSave={handleEditedEntrySave}
+          onCancel={handleEditCancel}
         />
       )}
     </div>
