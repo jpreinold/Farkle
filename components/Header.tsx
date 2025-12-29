@@ -128,7 +128,7 @@ const Header: React.FC<HeaderProps> = ({ onClearData }) => {
                   borderBottom: index !== themes.length - 1
                     ? `1px solid ${isDark ? theme.secondary : theme.borderColor}`
                     : 'none',
-                  ringColor: item.theme.secondary,
+                  ...({ '--tw-ring-color': item.theme.secondary } as React.CSSProperties),
                 }}
               >
                 <span

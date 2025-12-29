@@ -2,7 +2,7 @@
 import React, { useContext } from 'react';
 import Modal from './Modal';
 import CustomButton from './CustomButton';
-import { ThemeContext, darkTheme } from './ThemeContext';
+import { ThemeContext } from './ThemeContext';
 
 interface GameOverModalProps {
   visible: boolean;
@@ -13,7 +13,6 @@ interface GameOverModalProps {
 
 const GameOverModal: React.FC<GameOverModalProps> = ({ visible, winner, finalScores, onRestart }) => {
   const { theme } = useContext(ThemeContext);
-  const isDark = theme.primary === darkTheme.primary;
   
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onRestart}>
@@ -65,7 +64,7 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ visible, winner, finalSco
                       ? 'transparent' 
                       : `${theme.tableRowBorder}20`,
                   border: `1px solid ${theme.borderColor}`,
-                  ringColor: theme.secondary,
+                  ...({ '--tw-ring-color': theme.secondary } as React.CSSProperties),
                 }}
               >
                 <div className="flex items-center gap-3">

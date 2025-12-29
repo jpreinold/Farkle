@@ -7,12 +7,10 @@ import ScoreEntry from './ScoreEntry';
 import GameOverModal from './GameOverModal';
 import Header from './Header';
 import EditScoreModal from './EditScoreModal';
-import CustomButton from './CustomButton';
-import { ThemeContext, darkTheme } from './ThemeContext';
+import { ThemeContext } from './ThemeContext';
 import {
   Drawer,
   DrawerContent,
-  DrawerTrigger,
 } from './ui/drawer';
 
 interface Score {
@@ -35,7 +33,6 @@ const Scoreboard: React.FC = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const currentPlayer = players[currentPlayerIndex];
-  const isDark = theme.primary === darkTheme.primary;
 
   // Load game configuration and state from localStorage
   useEffect(() => {

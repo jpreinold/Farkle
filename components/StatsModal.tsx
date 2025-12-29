@@ -2,7 +2,7 @@
 import React, { useContext } from 'react';
 import Modal from './Modal';
 import CustomButton from './CustomButton';
-import { ThemeContext, darkTheme } from './ThemeContext';
+import { ThemeContext } from './ThemeContext';
 
 interface StatsModalProps {
   visible: boolean;
@@ -15,7 +15,6 @@ interface StatsModalProps {
 
 const StatsModal: React.FC<StatsModalProps> = ({ visible, stats, onClose }) => {
   const { theme } = useContext(ThemeContext);
-  const isDark = theme.primary === darkTheme.primary;
   const playersArray = Object.keys(stats);
 
   return (

@@ -146,8 +146,6 @@ const HistoryPage: React.FC = () => {
       return () => window.removeEventListener('resize', handleResize);
     }, [players.length]);
 
-    const isDark = theme.primary === darkTheme.primary;
-
     return (
       <Modal
         visible={true}
