@@ -76,12 +76,15 @@ const Header: React.FC<HeaderProps> = ({ onClearData }) => {
     return () => window.removeEventListener('resize', updateHeightVar);
   }, []);
 
+  const headerBackground = `var(--status-bar-color, ${theme.primary})`;
+
   return (
     <div
       ref={headerRef}
       className="w-full shadow-md fixed top-0 left-0 right-0 z-40"
       style={{
-        background: `linear-gradient(135deg, ${theme.primary} 0%, ${theme.secondary} 100%)`,
+        backgroundColor: theme.primary,
+        background: headerBackground,
         paddingTop: 'env(safe-area-inset-top)',
       }}
     >

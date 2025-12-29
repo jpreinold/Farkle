@@ -1,5 +1,5 @@
 // components/ThemeContext.tsx
-import React, { createContext, useState, ReactNode } from 'react';
+import React, { createContext, useState, ReactNode, useEffect } from 'react';
 
 export type Theme = {
   primary: string;
@@ -145,6 +145,19 @@ interface ThemeProviderProps {
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const [theme, setTheme] = useState<Theme>(lightTheme);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+
+    const root = document.documentElement;
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+
+    root?.style.setProperty('--status-bar-color', theme.primary);
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute('content', theme.primary);
+    }
+  }, [theme]);
+
   return (
     <ThemeContext.Provider value={{ theme, setTheme }}>
       {children}
