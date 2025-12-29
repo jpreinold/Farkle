@@ -1,61 +1,54 @@
-// components/ScoreEntry.tsx
-import React, { useState, useContext } from 'react';
+// components/ManualEntryPanel.tsx
+import React, { useContext } from 'react';
 import CustomButton from './CustomButton';
 import { ThemeContext } from './ThemeContext';
 
-interface ScoreEntryProps {
-  onAddEntry: (score: number, note: string) => void;
+interface ManualEntryPanelProps {
   currentPlayer: string;
-  submitLabel?: string;
-  farkleLabel?: string;
-  className?: string;
+  scoreValue: string;
+  noteValue: string;
+  onScoreChange: (value: string) => void;
+  onNoteChange: (value: string) => void;
+  onBank: () => void;
+  onSubmit: () => void;
+  onFarkle: () => void;
+  canBank: boolean;
+  canSubmit: boolean;
+  disabled?: boolean;
 }
 
-const ScoreEntry: React.FC<ScoreEntryProps> = ({
-  onAddEntry,
+const ManualEntryPanel: React.FC<ManualEntryPanelProps> = ({
   currentPlayer,
-  submitLabel = 'End Turn',
-  farkleLabel = 'Farkle!',
-  className = '',
+  scoreValue,
+  noteValue,
+  onScoreChange,
+  onNoteChange,
+  onBank,
+  onSubmit,
+  onFarkle,
+  canBank,
+  canSubmit,
+  disabled = false,
 }) => {
   const { theme } = useContext(ThemeContext);
-  const [score, setScore] = useState('');
-  const [note, setNote] = useState('');
-
-  const handleEndTurn = () => {
-    if (score.trim() === '') {
-      onAddEntry(0, "Farkle");
-    } else {
-      const parsedScore = parseInt(score, 10);
-      if (!isNaN(parsedScore)) {
-        onAddEntry(parsedScore, note);
-      } else {
-        console.warn('Enter a valid number for the score.');
-        return;
-      }
-    }
-    setScore('');
-    setNote('');
-  };
-
-  const buttonLabel = score.trim() === '' ? farkleLabel : submitLabel;
 
   return (
-    <div className={`w-full ${className}`}>
-      <p 
-        className="text-xl font-bold mb-4 text-center"
+    <div className="space-y-4">
+      <p
+        className="text-xl font-bold text-center"
         style={{ color: theme.text }}
       >
-        Current Player: <span style={{ color: theme.secondary }}>{currentPlayer}</span>
+        Current Player:{' '}
+        <span style={{ color: theme.secondary }}>{currentPlayer}</span>
       </p>
-      
+
       <div className="space-y-4">
         <div>
-          <label 
+          <label
             className="text-base font-semibold mb-2 block"
             style={{ color: theme.text }}
           >
-            Score:
+            Score to add
           </label>
           <input
             type="number"
@@ -65,9 +58,9 @@ const ScoreEntry: React.FC<ScoreEntryProps> = ({
               backgroundColor: theme.cardBackground,
               color: theme.text,
             }}
-            placeholder="Enter Score"
-            value={score}
-            onChange={(e) => setScore(e.target.value)}
+            placeholder="Enter score"
+            value={scoreValue}
+            onChange={(e) => onScoreChange(e.target.value)}
             onFocus={(e) => {
               e.target.style.borderColor = theme.secondary;
               e.target.style.boxShadow = `0 0 0 3px ${theme.secondary}40`;
@@ -76,16 +69,17 @@ const ScoreEntry: React.FC<ScoreEntryProps> = ({
               e.target.style.borderColor = theme.inputBorder;
               e.target.style.boxShadow = 'none';
             }}
-            aria-label="Score Input"
+            aria-label="Manual score input"
+            disabled={disabled}
           />
         </div>
-        
+
         <div>
-          <label 
+          <label
             className="text-base font-semibold mb-2 block"
             style={{ color: theme.text }}
           >
-            Note (Optional):
+            Note (optional)
           </label>
           <input
             type="text"
@@ -96,8 +90,8 @@ const ScoreEntry: React.FC<ScoreEntryProps> = ({
               color: theme.text,
             }}
             placeholder="Enter note"
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
+            value={noteValue}
+            onChange={(e) => onNoteChange(e.target.value)}
             onFocus={(e) => {
               e.target.style.borderColor = theme.secondary;
               e.target.style.boxShadow = `0 0 0 3px ${theme.secondary}40`;
@@ -106,18 +100,37 @@ const ScoreEntry: React.FC<ScoreEntryProps> = ({
               e.target.style.borderColor = theme.inputBorder;
               e.target.style.boxShadow = 'none';
             }}
-            aria-label="Note Input"
+            aria-label="Manual note input"
+            disabled={disabled}
           />
         </div>
-        
-        <CustomButton 
-          title={buttonLabel} 
-          onPress={handleEndTurn}
-          style={{ width: '100%', marginTop: '8px' }}
-        />
+
+        <div className="space-y-3">
+          <CustomButton
+            title="Bank Score"
+            onPress={onBank}
+            disabled={!canBank || disabled}
+            style={{ width: '100%' }}
+          />
+          <CustomButton
+            title="Submit Score"
+            onPress={onSubmit}
+            disabled={!canSubmit || disabled}
+            variant="primary"
+            style={{ width: '100%' }}
+          />
+          <CustomButton
+            title="Farkle"
+            onPress={onFarkle}
+            disabled={disabled}
+            variant="outline"
+            style={{ width: '100%' }}
+          />
+        </div>
       </div>
     </div>
   );
 };
 
-export default ScoreEntry;
+export default ManualEntryPanel;
+

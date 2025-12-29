@@ -7,6 +7,7 @@ export type ScoringGroupType =
   | 'four-kind'
   | 'five-kind'
   | 'six-kind'
+  | 'four-kind-plus-pair'
   | 'straight'
   | 'three-pairs'
   | 'two-triplets';
@@ -57,6 +58,11 @@ export function calculateScore(dice: number[]): number {
     if (isTwoTriplets(sorted)) {
       return 2500;
     }
+
+    // Check for four of a kind plus a pair
+    if (hasFourKindPlusPair(counts)) {
+      return 1500;
+    }
   }
 
   // Process multiples (six, five, four, three of a kind)
@@ -65,27 +71,26 @@ export function calculateScore(dice: number[]): number {
   // Process six of a kind
   for (let value = 1; value <= 6; value++) {
     if (counts[value] === 6) {
-      score += value === 1 ? 3000 : value * 600;
+      score += 3000;
       processed.add(value);
+      counts[value] = 0;
     }
   }
 
   // Process five of a kind
   for (let value = 1; value <= 6; value++) {
     if (counts[value] === 5 && !processed.has(value)) {
-      score += value === 1 ? 2000 : value * 400;
+      score += 2000;
       processed.add(value);
-      // Remove 5, leave 1 for potential single scoring
-      counts[value] = 1;
+      counts[value] = 0;
     }
   }
 
   // Process four of a kind
   for (let value = 1; value <= 6; value++) {
     if (counts[value] === 4 && !processed.has(value)) {
-      score += value === 1 ? 1000 : value * 200;
+      score += value === 1 ? 1100 : 1000;
       processed.add(value);
-      // Remove 4, leave 0 (all used)
       counts[value] = 0;
     }
   }
@@ -194,6 +199,22 @@ function isTwoTriplets(sorted: number[]): boolean {
 }
 
 /**
+ * Check if dice form four of a kind plus a pair
+ */
+function hasFourKindPlusPair(counts: Record<number, number>): boolean {
+  let hasFour = false;
+  let hasPair = false;
+  for (let value = 1; value <= 6; value++) {
+    if (counts[value] === 4) {
+      hasFour = true;
+    } else if (counts[value] === 2) {
+      hasPair = true;
+    }
+  }
+  return hasFour && hasPair;
+}
+
+/**
  * Get count of each die value
  */
 function getCounts(dice: number[]): Record<number, number> {
@@ -221,13 +242,13 @@ function scoreForMultiple(value: number, count: number): number {
     return value === 1 ? 1000 : value * 100;
   }
   if (count === 4) {
-    return value === 1 ? 1000 : value * 200;
+    return value === 1 ? 1100 : 1000;
   }
   if (count === 5) {
-    return value === 1 ? 2000 : value * 400;
+    return 2000;
   }
   // count === 6
-  return value === 1 ? 3000 : value * 600;
+  return 3000;
 }
 
 function typeForMultiple(count: number): ScoringGroupType {
@@ -320,6 +341,22 @@ export function analyzeRoll(dice: number[]): RollAnalysis {
         .filter(([, arr]) => arr.length === 3)
         .flatMap(([, arr]) => arr);
       addGroup(tripletIndices, 2500, 'two-triplets', true);
+    }
+    const quadEntry = Object.entries(valueToIndices).find(([, arr]) => arr.length === 4);
+    if (quadEntry) {
+      const pairEntry = Object.entries(valueToIndices).find(
+        ([key, arr]) => arr.length === 2 && key !== quadEntry[0]
+      );
+      if (pairEntry) {
+        const quadIndices = quadEntry[1].slice(0, 4);
+        const pairIndices = pairEntry[1].slice(0, 2);
+        addGroup(
+          [...quadIndices, ...pairIndices],
+          1500,
+          'four-kind-plus-pair',
+          true
+        );
+      }
     }
   }
 

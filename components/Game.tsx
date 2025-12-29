@@ -16,6 +16,7 @@ import CompactPlayerScoreboard from './CompactPlayerScoreboard';
 import TurnScoreDisplay from './TurnScoreDisplay';
 import DiceGameCanvas from './DiceGameCanvas';
 import GameActionButtons from './GameActionButtons';
+import ManualEntryPanel from './ManualEntryPanel';
 import GameOverModal from './GameOverModal';
 import {
   canScore,
@@ -23,11 +24,14 @@ import {
   ScoringGroup,
 } from '../utils/farkleScoring';
 
+type ScoreSource = 'auto' | 'manual';
+
 interface ScoreEntry {
   id: number;
   player: string;
   score: number;
   note: string;
+  source: ScoreSource;
 }
 
 const Game: React.FC = () => {
@@ -41,6 +45,9 @@ const Game: React.FC = () => {
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const [winner, setWinner] = useState('');
+  const [isManualMode, setIsManualMode] = useState(false);
+  const [manualScoreInput, setManualScoreInput] = useState('');
+  const [manualNoteInput, setManualNoteInput] = useState('');
 
   const [availableDice, setAvailableDice] = useState(6);
   const [currentRoll, setCurrentRoll] = useState<number[]>([]);
@@ -67,6 +74,8 @@ const Game: React.FC = () => {
     setIsRolling(false);
     setHasRolled(false);
     setFarkleOccurred(false);
+    setManualScoreInput('');
+    setManualNoteInput('');
     pendingGroupIdsRef.current = [];
     pendingScoreRef.current = 0;
   }, []);
@@ -90,7 +99,16 @@ const Game: React.FC = () => {
         const savedState = await storage.getItem('GAME_STATE_SIMULATION');
         if (savedState) {
           const parsedState = JSON.parse(savedState);
-          setScores(parsedState.scores || []);
+          const normalizedScores: ScoreEntry[] = ((parsedState.scores || []) as ScoreEntry[]).map(
+            (entry, index) => ({
+              id: entry?.id ?? index + 1,
+              player: entry?.player || '',
+              score: entry?.score || 0,
+              note: entry?.note || '',
+              source: entry?.source === 'manual' ? 'manual' : 'auto',
+            })
+          );
+          setScores(normalizedScores);
           setCurrentPlayerIndex(parsedState.currentPlayerIndex || 0);
           setGameOver(parsedState.gameOver || false);
           setWinner(parsedState.winner || '');
@@ -197,6 +215,16 @@ const Game: React.FC = () => {
     }, 0);
   }, [selectedGroupIds, groupMap]);
 
+  const manualPendingScore = useMemo(() => {
+    const parsed = parseInt(manualScoreInput, 10);
+    if (Number.isNaN(parsed)) {
+      return 0;
+    }
+    return Math.max(0, parsed);
+  }, [manualScoreInput]);
+
+  const displaySelectedScorePreview = isManualMode ? manualPendingScore : selectedScorePreview;
+
   const hasBankableSelection =
     selectedGroupIds.length > 0
       ? selectedScorePreview > 0
@@ -264,38 +292,52 @@ const Game: React.FC = () => {
   const removeIndexFromSelection = useCallback(
     (index: number) => {
       setSelectedGroupIds((prev) => {
-        const groupsToRemove = prev
-          .map((id) => groupMap.get(id))
-          .filter(
-            (group): group is ScoringGroup =>
-              Boolean(group && group.indices.includes(index))
-          );
-        if (!groupsToRemove.length) return prev;
-        let updated = prev.filter(
-          (id) => !groupsToRemove.some((group) => group.id === id)
-        );
-        const used = new Set<number>();
-        updated.forEach((id) => {
+        const allIndicesSet = new Set<number>();
+        prev.forEach((id) => {
           const group = groupMap.get(id);
-          group?.indices.forEach((idx) => used.add(idx));
+          group?.indices.forEach((idx) => allIndicesSet.add(idx));
         });
-        groupsToRemove.forEach((group) => {
-          group.indices.forEach((idx) => {
-            if (idx === index || used.has(idx)) return;
-            const alternatives = getGroupsForIndex(idx).filter((candidate) =>
-              candidate.indices.every((i) => !used.has(i) && i !== index)
-            );
-            if (!alternatives.length) return;
-            alternatives.sort(
-              (a, b) => b.score - a.score || a.indices.length - b.indices.length
-            );
-            const chosen = alternatives[0];
-            if (updated.includes(chosen.id)) return;
-            updated = [...updated, chosen.id];
-            chosen.indices.forEach((i) => used.add(i));
-          });
+
+        if (!allIndicesSet.has(index)) {
+          return prev;
+        }
+
+        const desiredIndices = Array.from(allIndicesSet.values()).filter(
+          (idx) => idx !== index
+        );
+
+        let next = prev.filter((id) => {
+          const group = groupMap.get(id);
+          return group && !group.indices.includes(index);
         });
-        return updated;
+
+        const usedIndices = new Set<number>();
+        next.forEach((id) => {
+          const group = groupMap.get(id);
+          group?.indices.forEach((idx) => usedIndices.add(idx));
+        });
+
+        const needsCoverage = desiredIndices.filter((idx) => !usedIndices.has(idx));
+
+        needsCoverage.forEach((idx) => {
+          const candidates = getGroupsForIndex(idx).filter((candidate) =>
+            candidate.indices.every((i) => !usedIndices.has(i))
+          );
+          if (!candidates.length) {
+            return;
+          }
+          candidates.sort(
+            (a, b) => b.score - a.score || a.indices.length - b.indices.length
+          );
+          const chosen = candidates[0];
+          if (next.includes(chosen.id)) {
+            return;
+          }
+          next = [...next, chosen.id];
+          chosen.indices.forEach((i) => usedIndices.add(i));
+        });
+
+        return next;
       });
     },
     [groupMap, getGroupsForIndex]
@@ -381,7 +423,7 @@ const Game: React.FC = () => {
   ]);
 
   const finalizeTurn = useCallback(
-    (scoreValue: number, note: string) => {
+    (scoreValue: number, note: string, source: ScoreSource = 'auto') => {
       if (players.length === 0) return;
       const player = players[currentPlayerIndex];
       setScores((prev) => [
@@ -391,12 +433,52 @@ const Game: React.FC = () => {
           player,
           score: scoreValue,
           note,
+          source,
         },
       ]);
       setCurrentPlayerIndex((prev) => (prev + 1) % players.length);
       resetTurnState();
     },
     [players, currentPlayerIndex, resetTurnState]
+  );
+
+  const handleManualScoreChange = useCallback((value: string) => {
+    setManualScoreInput(value);
+  }, []);
+
+  const handleManualNoteChange = useCallback((value: string) => {
+    setManualNoteInput(value);
+  }, []);
+
+  const handleManualBank = useCallback(() => {
+    if (gameOver) return;
+    if (manualPendingScore <= 0) return;
+    setTurnScore((prev) => prev + manualPendingScore);
+    setManualScoreInput('');
+  }, [gameOver, manualPendingScore]);
+
+  const handleManualSubmit = useCallback(() => {
+    if (gameOver) return;
+    const pendingScore = manualPendingScore;
+    const totalScore = turnScore + pendingScore;
+    if (totalScore === 0) return;
+    const note = manualNoteInput.trim() || 'Manual Entry';
+    finalizeTurn(totalScore, note, 'manual');
+  }, [gameOver, manualPendingScore, turnScore, manualNoteInput, finalizeTurn]);
+
+  const handleManualFarkle = useCallback(() => {
+    if (gameOver) return;
+    const note = manualNoteInput.trim() || 'Manual Farkle';
+    finalizeTurn(0, note, 'manual');
+  }, [gameOver, manualNoteInput, finalizeTurn]);
+
+  const handleModeChange = useCallback(
+    (manual: boolean) => {
+      if (manual === isManualMode) return;
+      resetTurnState();
+      setIsManualMode(manual);
+    },
+    [isManualMode, resetTurnState]
   );
 
   const handleEndTurn = useCallback(() => {
@@ -421,11 +503,17 @@ const Game: React.FC = () => {
 
   const canRoll =
     !gameOver &&
+    !isManualMode &&
     !isRolling &&
     players.length > 0 &&
     (!hasRolled || hasBankableSelection);
 
-  const canEndTurn = !gameOver && (turnScore > 0 || hasBankableSelection);
+  const canEndTurn =
+    !gameOver && !isManualMode && (turnScore > 0 || hasBankableSelection);
+
+  const canBankManual = !gameOver && isManualMode && manualPendingScore > 0;
+  const canSubmitManual =
+    !gameOver && isManualMode && turnScore + manualPendingScore > 0;
 
   const displayedDice =
     hasRolled || isRolling
@@ -485,37 +573,93 @@ const Game: React.FC = () => {
           currentPlayerIndex={currentPlayerIndex}
         />
 
+        <div className="flex justify-center">
+          <div
+            className="inline-flex rounded-full overflow-hidden border"
+            style={{ borderColor: theme.borderColor }}
+          >
+            <button
+              type="button"
+              onClick={() => handleModeChange(false)}
+              className="px-4 py-2 text-sm font-semibold transition-colors duration-200"
+              style={{
+                backgroundColor: !isManualMode ? theme.secondary : theme.cardBackground,
+                color: !isManualMode ? '#ffffff' : theme.text,
+              }}
+            >
+              Dice
+            </button>
+            <button
+              type="button"
+              onClick={() => handleModeChange(true)}
+              className="px-4 py-2 text-sm font-semibold transition-colors duration-200"
+              style={{
+                backgroundColor: isManualMode ? theme.secondary : theme.cardBackground,
+                color: isManualMode ? '#ffffff' : theme.text,
+              }}
+            >
+              Manual
+            </button>
+          </div>
+        </div>
+
         <TurnScoreDisplay
           currentPlayer={currentPlayer}
           turnScore={turnScore}
-          selectedScorePreview={selectedScorePreview}
+          selectedScorePreview={displaySelectedScorePreview}
           farkleOccurred={farkleOccurred}
           isHotDice={isHotDice}
         />
 
-        <DiceGameCanvas
-          dice={displayedDice}
-          availableDice={availableDice === 0 ? 6 : availableDice}
-          isRolling={isRolling}
-          hasRolled={hasRolled}
-          selectedIndices={selectedIndices}
-          selectableIndices={selectableIndexSet}
-          onDiceClick={handleDiceClick}
-          farkleOccurred={farkleOccurred}
-          gameOver={gameOver}
-        />
+        {isManualMode ? (
+          <div
+            className="card p-4"
+            style={{
+              backgroundColor: theme.cardBackground,
+              boxShadow: `0 4px 16px ${theme.shadowColor}`,
+            }}
+          >
+            <ManualEntryPanel
+              currentPlayer={currentPlayer}
+              scoreValue={manualScoreInput}
+              noteValue={manualNoteInput}
+              onScoreChange={handleManualScoreChange}
+              onNoteChange={handleManualNoteChange}
+              onBank={handleManualBank}
+              onSubmit={handleManualSubmit}
+              onFarkle={handleManualFarkle}
+              canBank={canBankManual}
+              canSubmit={canSubmitManual}
+              disabled={gameOver}
+            />
+          </div>
+        ) : (
+          <DiceGameCanvas
+            dice={displayedDice}
+            availableDice={availableDice === 0 ? 6 : availableDice}
+            isRolling={isRolling}
+            hasRolled={hasRolled}
+            selectedIndices={selectedIndices}
+            selectableIndices={selectableIndexSet}
+            onDiceClick={handleDiceClick}
+            farkleOccurred={farkleOccurred}
+            gameOver={gameOver}
+          />
+        )}
 
-        <GameActionButtons
-          onRoll={handleRoll}
-          onEndTurn={handleEndTurn}
-          onFarkle={handleFarkle}
-          canRoll={canRoll}
-          canEndTurn={canEndTurn}
-          farkleOccurred={farkleOccurred}
-          hasRolled={hasRolled}
-          isRolling={isRolling}
-          gameOver={gameOver}
-        />
+        {!isManualMode && (
+          <GameActionButtons
+            onRoll={handleRoll}
+            onEndTurn={handleEndTurn}
+            onFarkle={handleFarkle}
+            canRoll={canRoll}
+            canEndTurn={canEndTurn}
+            farkleOccurred={farkleOccurred}
+            hasRolled={hasRolled}
+            isRolling={isRolling}
+            gameOver={gameOver}
+          />
+        )}
       </div>
 
       {gameOver && (
