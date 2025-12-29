@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       includeAssets: ['favicon.png', 'icon.png', 'dice.png', 'splash-icon.png', 'adaptive-icon.png'],
       manifest: {
         name: 'Farkle',

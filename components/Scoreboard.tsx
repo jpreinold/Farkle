@@ -502,7 +502,7 @@ const Scoreboard: React.FC = () => {
         open={drawerOpen} 
         onOpenChange={setDrawerOpen}
         shouldScaleBackground={false}
-        dismissible={true}
+        dismissible={false}
       >
         <DrawerContent 
           showOverlay={false}
@@ -516,7 +516,7 @@ const Scoreboard: React.FC = () => {
             <ScoreEntry 
               onAddEntry={(score, note) => {
                 addScoreEntry(score, note);
-                setDrawerOpen(false);
+                // Don't close drawer on form submit - only close on drag down
               }} 
               currentPlayer={currentPlayer} 
             />
