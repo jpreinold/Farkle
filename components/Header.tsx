@@ -1,5 +1,5 @@
 // components/Header.tsx
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { IoMdSettings } from 'react-icons/io';
 import CustomButton from './CustomButton';
@@ -24,6 +24,7 @@ const Header: React.FC<HeaderProps> = ({ onClearData }) => {
   const { theme, setTheme } = useContext(ThemeContext);
   const navigate = useNavigate();
   const location = useLocation();
+  const headerRef = useRef<HTMLDivElement | null>(null);
   
   const handleHeaderPress = () => {
     navigate('/');
@@ -60,9 +61,25 @@ const Header: React.FC<HeaderProps> = ({ onClearData }) => {
   // Determine if the current theme is dark by comparing primary color values.
   const isDark = theme.primary === darkTheme.primary;
 
+  useEffect(() => {
+    const updateHeightVar = () => {
+      if (headerRef.current) {
+        const { height } = headerRef.current.getBoundingClientRect();
+        document.documentElement.style.setProperty(
+          '--header-height',
+          `${height}px`
+        );
+      }
+    };
+    updateHeightVar();
+    window.addEventListener('resize', updateHeightVar);
+    return () => window.removeEventListener('resize', updateHeightVar);
+  }, []);
+
   return (
     <div
-      className="w-full shadow-md relative sticky top-0 z-50"
+      ref={headerRef}
+      className="w-full shadow-md fixed top-0 left-0 right-0 z-40"
       style={{
         background: `linear-gradient(135deg, ${theme.primary} 0%, ${theme.secondary} 100%)`,
         paddingTop: 'env(safe-area-inset-top)',

@@ -89,26 +89,26 @@ const HomePage: React.FC = () => {
     <>
       <Header onClearData={handleClearData} />
       <div
-        className="flex-1 flex flex-col justify-center items-center p-6 md:p-8 min-h-screen"
+        className="flex-1 flex flex-col items-center px-6 pt-8 pb-12 md:px-8"
         style={{ backgroundColor: theme.background }}
       >
         {/* Hero Section */}
-        <div className="w-full max-w-md text-center mb-8 animate-fade-in">
+        <div className="w-full max-w-md text-center mb-6 animate-fade-in">
           <h1
-            className="text-4xl md:text-5xl font-bold mb-4"
+            className="text-4xl md:text-5xl font-bold mb-3 mt-6"
             style={{ color: theme.titleText }}
           >
             Welcome to Farkle
           </h1>
           <p
-            className="text-lg md:text-xl mb-8 opacity-80"
+            className="text-lg md:text-xl mb-6 opacity-80"
             style={{ color: theme.text }}
           >
             The classic dice game scorekeeper
           </p>
           
           {/* Dice Image with glow effect */}
-          <div className="mb-8 flex justify-center">
+          <div className="mb-6 flex justify-center">
             <div 
               className="rounded-2xl p-4 shadow-lg"
               style={{ 
@@ -126,52 +126,33 @@ const HomePage: React.FC = () => {
           </div>
         </div>
 
-        {/* Action Cards */}
-        <div className="w-full max-w-md space-y-4 animate-slide-up">
-          <div 
-            className="card card-hover space-y-2"
-            style={{ 
-              backgroundColor: theme.cardBackground,
-              boxShadow: `0 4px 16px ${theme.shadowColor}`,
-            }}
-          >
-            <CustomButton 
-              title={loadingSessions ? "Loading..." : "Continue Game"} 
-              onPress={handleContinueGame} 
-              disabled={loadingSessions || unfinishedSessions.length === 0}
-              style={{ width: '100%', marginBottom: 0 }} 
+        {/* Action Panel */}
+        <div
+          className="w-full max-w-md animate-slide-up"
+          style={{
+            backgroundColor: theme.cardBackground,
+            boxShadow: `0 4px 16px ${theme.shadowColor}`,
+            borderRadius: '1.25rem',
+            padding: '22px',
+          }}
+        >
+          <div className="space-y-2.5">
+            {!loadingSessions && unfinishedSessions.length > 0 && (
+              <CustomButton
+                title="Continue Game"
+                onPress={handleContinueGame}
+                style={{ width: '100%' }}
+              />
+            )}
+            <CustomButton
+              title="New Game"
+              onPress={handleNewGame}
+              style={{ width: '100%' }}
             />
-            <p className="text-sm opacity-80" style={{ color: theme.text }}>
-              Resume where you left off. {unfinishedSessions.length === 0 ? 'No unfinished games detected.' : `${unfinishedSessions.length} in-progress match${unfinishedSessions.length > 1 ? 'es' : ''} available.`}
-            </p>
-          </div>
-
-          <div 
-            className="card card-hover"
-            style={{ 
-              backgroundColor: theme.cardBackground,
-              boxShadow: `0 4px 16px ${theme.shadowColor}`,
-            }}
-          >
-            <CustomButton 
-              title="New Game" 
-              onPress={handleNewGame} 
-              style={{ width: '100%', marginBottom: 0 }} 
-            />
-          </div>
-
-          <div 
-            className="card card-hover"
-            style={{ 
-              backgroundColor: theme.cardBackground,
-              boxShadow: `0 4px 16px ${theme.shadowColor}`,
-            }}
-          >
-            <CustomButton 
-              title="History" 
-              onPress={handleHistory} 
-              style={{ width: '100%', marginBottom: 0 }} 
-              variant="outline"
+            <CustomButton
+              title="History"
+              onPress={handleHistory}
+              style={{ width: '100%' }}
             />
           </div>
         </div>
