@@ -29,6 +29,10 @@ const HomePage: React.FC = () => {
     }
   };
 
+  const handleNewSimulation = () => {
+    navigate('/game-setup');
+  };
+
   const handleStats = () => {
     navigate('/history');
   };
@@ -94,6 +98,20 @@ const HomePage: React.FC = () => {
             <CustomButton 
               title="New Game" 
               onPress={handleNewGame} 
+              style={{ width: '100%', marginBottom: 0 }} 
+            />
+          </div>
+
+          <div 
+            className="card card-hover"
+            style={{ 
+              backgroundColor: theme.cardBackground,
+              boxShadow: `0 4px 16px ${theme.shadowColor}`,
+            }}
+          >
+            <CustomButton 
+              title="New Simulation" 
+              onPress={handleNewSimulation} 
               style={{ width: '100%', marginBottom: 0 }} 
             />
           </div>

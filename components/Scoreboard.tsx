@@ -11,6 +11,8 @@ import { ThemeContext } from './ThemeContext';
 import {
   Drawer,
   DrawerContent,
+  DrawerTitle,
+  DrawerDescription,
 } from './ui/drawer';
 
 interface Score {
@@ -512,6 +514,12 @@ const Scoreboard: React.FC = () => {
             borderTop: `2px solid ${theme.borderColor}`,
           }}
         >
+          <DrawerTitle style={{ position: 'absolute', width: '1px', height: '1px', padding: '0', margin: '-1px', overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', borderWidth: '0' }}>
+            Add Score Entry
+          </DrawerTitle>
+          <DrawerDescription style={{ position: 'absolute', width: '1px', height: '1px', padding: '0', margin: '-1px', overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', borderWidth: '0' }}>
+            Enter score for {currentPlayer}
+          </DrawerDescription>
           <div className="p-6 pb-8" style={{ paddingBottom: `calc(2rem + env(safe-area-inset-bottom))` }}>
             <ScoreEntry 
               onAddEntry={(score, note) => {
