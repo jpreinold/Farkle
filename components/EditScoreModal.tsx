@@ -40,58 +40,90 @@ const EditScoreModal: React.FC<EditScoreModalProps> = ({ visible, entry, onSave,
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onCancel}>
       <div
-        className="w-[85%] p-6 rounded-lg shadow-lg flex flex-col items-center"
-        style={{ backgroundColor: theme.background }}
+        className="w-[90%] max-w-md rounded-2xl p-8 flex flex-col shadow-2xl"
+        style={{ backgroundColor: theme.cardBackground }}
       >
         <h2
-          className="text-xl font-bold mb-4"
+          className="text-2xl font-bold mb-6 text-center"
           style={{ color: theme.titleText }}
         >
           Edit Score
         </h2>
-        <label
-          className="self-start text-base mb-1"
-          style={{ color: theme.titleText }}
-        >
-          Score:
-        </label>
-        <input
-          type="number"
-          className="w-full border rounded-md p-3 text-base mb-3"
-          style={{
-            borderColor: theme.inputBorder,
-            color: theme.text,
-          }}
-          value={score}
-          onChange={(e) => setScore(e.target.value)}
-          placeholder="Enter score"
-        />
-        <label
-          className="self-start text-base mb-1"
-          style={{ color: theme.titleText }}
-        >
-          Note:
-        </label>
-        <input
-          type="text"
-          className="w-full border rounded-md p-3 text-base mb-3"
-          style={{
-            borderColor: theme.inputBorder,
-            color: theme.text,
-          }}
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          placeholder="Enter note"
-        />
-        <div className="flex flex-row justify-around w-full">
-          <div className="flex-1 mr-2">
-            <CustomButton title="Save" onPress={handleSave} />
+        
+        <div className="space-y-6 mb-6">
+          <div>
+            <label
+              className="text-base font-semibold mb-2 block"
+              style={{ color: theme.text }}
+            >
+              Score:
+            </label>
+            <input
+              type="number"
+              className="input-modern w-full focus:ring-2 focus:ring-offset-2"
+              style={{
+                borderColor: theme.inputBorder,
+                color: theme.text,
+                backgroundColor: theme.cardBackground,
+              }}
+              value={score}
+              onChange={(e) => setScore(e.target.value)}
+              onFocus={(e) => {
+                e.target.style.borderColor = theme.secondary;
+                e.target.style.boxShadow = `0 0 0 3px ${theme.secondary}40`;
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = theme.inputBorder;
+                e.target.style.boxShadow = 'none';
+              }}
+              placeholder="Enter score"
+            />
           </div>
-          <div className="flex-1 ml-2">
+          
+          <div>
+            <label
+              className="text-base font-semibold mb-2 block"
+              style={{ color: theme.text }}
+            >
+              Note:
+            </label>
+            <input
+              type="text"
+              className="input-modern w-full focus:ring-2 focus:ring-offset-2"
+              style={{
+                borderColor: theme.inputBorder,
+                color: theme.text,
+                backgroundColor: theme.cardBackground,
+              }}
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              onFocus={(e) => {
+                e.target.style.borderColor = theme.secondary;
+                e.target.style.boxShadow = `0 0 0 3px ${theme.secondary}40`;
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = theme.inputBorder;
+                e.target.style.boxShadow = 'none';
+              }}
+              placeholder="Enter note"
+            />
+          </div>
+        </div>
+        
+        <div className="flex flex-row gap-3">
+          <div className="flex-1">
+            <CustomButton 
+              title="Save" 
+              onPress={handleSave}
+              style={{ width: '100%' }}
+            />
+          </div>
+          <div className="flex-1">
             <CustomButton
               title="Cancel"
               onPress={onCancel}
-              style={{ backgroundColor: '#A0A0A0' }}
+              variant="outline"
+              style={{ width: '100%' }}
             />
           </div>
         </div>

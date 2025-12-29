@@ -1,5 +1,6 @@
 // components/HistoryPage.tsx
 import React, { useState, useEffect, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import storage from '../utils/storage';
 import CustomButton from './CustomButton';
 import Header from './Header';
@@ -23,12 +24,9 @@ interface GameHistory {
   finalScores: { player: string; total: number }[];
 }
 
-interface HistoryPageProps {
-  onBack: () => void;
-}
-
-const HistoryPage: React.FC<HistoryPageProps> = ({ onBack }) => {
+const HistoryPage: React.FC = () => {
   const { theme } = useContext(ThemeContext);
+  const navigate = useNavigate();
   const [history, setHistory] = useState<GameHistory[]>([]);
   const [selectedGame, setSelectedGame] = useState<GameHistory | null>(null);
 
@@ -48,34 +46,57 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ onBack }) => {
 
   const renderHistoryItem = (game: GameHistory) => {
     const isDark = theme.primary === darkTheme.primary;
-    const backgroundColor = isDark ? theme.secondary : theme.secondary + '33';
     const winnerColor = isDark ? theme.text : theme.primary;
 
     return (
       <button
         key={game.id}
-        className="p-3 rounded-lg mb-3 w-full text-left shadow-md"
-        style={{ backgroundColor }}
+        className="card card-hover w-full text-left mb-4 transition-all duration-200"
+        style={{ 
+          backgroundColor: theme.cardBackground,
+          boxShadow: `0 4px 16px ${theme.shadowColor}`,
+        }}
         onClick={() => setSelectedGame(game)}
       >
-        <p
-          className="text-base font-semibold mb-1"
-          style={{ color: theme.text }}
-        >
-          {game.date}
-        </p>
-        <p
-          className="text-base"
-          style={{ color: winnerColor }}
-        >
-          Winner: {game.winner}
-        </p>
-        <p
-          className="text-base mt-1"
-          style={{ color: theme.text }}
-        >
-          Players: {game.players.join(', ')}
-        </p>
+        <div className="flex flex-col space-y-2">
+          <div className="flex items-center justify-between">
+            <p
+              className="text-lg font-bold"
+              style={{ color: theme.titleText }}
+            >
+              {game.date}
+            </p>
+            <div 
+              className="px-3 py-1 rounded-full text-sm font-semibold"
+              style={{ 
+                backgroundColor: theme.secondary,
+                color: '#ffffff',
+              }}
+            >
+              {game.players.length} Players
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span
+              className="text-base font-semibold"
+              style={{ color: theme.text }}
+            >
+              Winner:
+            </span>
+            <span
+              className="text-base font-bold"
+              style={{ color: winnerColor }}
+            >
+              {game.winner}
+            </span>
+          </div>
+          <p
+            className="text-sm opacity-75"
+            style={{ color: theme.text }}
+          >
+            Players: {game.players.join(', ')}
+          </p>
+        </div>
       </button>
     );
   };
@@ -134,31 +155,44 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ onBack }) => {
         onRequestClose={() => setSelectedGame(null)}
       >
         <div
-          className="w-[90%] h-[70%] rounded-lg p-6 flex flex-col items-center overflow-auto"
-          style={{ backgroundColor: theme.modalBackground }}
+          className="w-[90%] max-w-4xl h-[85%] rounded-2xl p-6 md:p-8 flex flex-col overflow-auto shadow-2xl"
+          style={{ backgroundColor: theme.cardBackground }}
         >
-          <h2
-            className="text-2xl font-bold mb-3"
-            style={{ color: theme.titleText }}
-          >
-            Game Details
-          </h2>
-          <p
-            className="text-lg mb-2"
-            style={{ color: theme.text }}
-          >
-            Date: {selectedGame.date}
-          </p>
-          <p
-            className="text-lg mb-2"
-            style={{ color: theme.text }}
-          >
-            Winner: {selectedGame.winner}
-          </p>
+          <div className="mb-6">
+            <h2
+              className="text-3xl font-bold mb-4"
+              style={{ color: theme.titleText }}
+            >
+              Game Details
+            </h2>
+            <div className="space-y-2">
+              <p
+                className="text-lg"
+                style={{ color: theme.text }}
+              >
+                <span className="font-semibold">Date:</span> {selectedGame.date}
+              </p>
+              <p
+                className="text-lg"
+                style={{ color: theme.text }}
+              >
+                <span className="font-semibold">Winner:</span>{' '}
+                <span style={{ color: theme.primary, fontWeight: 'bold' }}>
+                  {selectedGame.winner}
+                </span>
+              </p>
+            </div>
+          </div>
           <div className="overflow-x-auto w-full">
-            <div className="rounded-lg overflow-hidden inline-block min-w-full">
+            <div 
+              className="rounded-xl overflow-hidden inline-block min-w-full shadow-md"
+              style={{ 
+                backgroundColor: theme.cardBackground,
+                boxShadow: `0 4px 16px ${theme.shadowColor}`,
+              }}
+            >
               <div
-                className="flex flex-row py-2 px-1"
+                className="flex flex-row py-4 px-4"
                 style={{ backgroundColor: theme.tableHeader }}
               >
                 <div
@@ -187,17 +221,18 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ onBack }) => {
                   </div>
                 ))}
               </div>
-              <div className="max-h-[250px] overflow-y-auto">
+              <div className="max-h-[300px] overflow-y-auto">
                 {tableData.map((row, rIndex) => (
                   <div
                     key={rIndex}
-                    className={`flex flex-row py-2 px-1 border-b ${
-                      isDark ? '' : 'border-opacity-20'
+                    className={`flex flex-row py-3 px-4 border-b transition-all duration-200 ${
+                      rIndex % 2 === 0 ? '' : 'bg-opacity-50'
                     }`}
                     style={{
-                      borderBottomColor: isDark
-                        ? theme.secondary
-                        : theme.secondary + '33',
+                      backgroundColor: rIndex % 2 === 0 
+                        ? 'transparent' 
+                        : `${theme.tableRowBorder}40`,
+                      borderBottomColor: theme.borderColor,
                     }}
                   >
                     {row.map((cell, cIndex) => (
@@ -218,8 +253,11 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ onBack }) => {
                 ))}
               </div>
               <div
-                className="flex flex-row py-2 px-1"
-                style={{ backgroundColor: theme.tableRowBorder }}
+                className="flex flex-row py-4 px-4 border-t-2"
+                style={{ 
+                  backgroundColor: theme.tableRowBorder,
+                  borderTopColor: theme.secondary,
+                }}
               >
                 {totalsRow.map((cell, index) => (
                   <div
@@ -238,10 +276,11 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ onBack }) => {
               </div>
             </div>
           </div>
-          <div className="mt-5 w-4/5">
+          <div className="mt-6 flex justify-center">
             <CustomButton
               title="Close"
               onPress={() => setSelectedGame(null)}
+              style={{ minWidth: '200px' }}
             />
           </div>
         </div>
@@ -251,30 +290,46 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ onBack }) => {
 
   return (
     <>
-      <Header onPress={onBack} />
+      <Header />
       <div
-        className="flex-1 p-4 flex flex-col items-center"
+        className="flex-1 p-6 md:p-8 flex flex-col"
         style={{ backgroundColor: theme.background }}
       >
-        <h2
-          className="text-3xl font-bold mb-6"
-          style={{ color: theme.titleText }}
-        >
-          Game History
-        </h2>
-        <div className="flex-1 self-stretch mb-4 overflow-y-auto">
-          {history.length > 0 ? (
-            history.map((game) => renderHistoryItem(game))
-          ) : (
-            <p
-              className="text-base text-center my-5"
-              style={{ color: theme.text }}
-            >
-              No game history available.
-            </p>
-          )}
+        <div className="max-w-2xl mx-auto w-full">
+          <h2
+            className="text-3xl md:text-4xl font-bold mb-8 text-center"
+            style={{ color: theme.titleText }}
+          >
+            Game History
+          </h2>
+          <div className="flex-1 mb-6 overflow-y-auto space-y-4">
+            {history.length > 0 ? (
+              history.map((game) => renderHistoryItem(game))
+            ) : (
+              <div 
+                className="card text-center py-12"
+                style={{ 
+                  backgroundColor: theme.cardBackground,
+                  boxShadow: `0 4px 16px ${theme.shadowColor}`,
+                }}
+              >
+                <p
+                  className="text-lg opacity-75"
+                  style={{ color: theme.text }}
+                >
+                  No game history available.
+                </p>
+              </div>
+            )}
+          </div>
+          <div className="flex justify-center">
+            <CustomButton 
+              title="Back" 
+              onPress={() => navigate('/')} 
+              style={{ minWidth: '200px' }} 
+            />
+          </div>
         </div>
-        <CustomButton title="Back" onPress={onBack} style={{ width: '80%', marginVertical: 12 }} />
       </div>
       {renderGameDetailsModal()}
     </>

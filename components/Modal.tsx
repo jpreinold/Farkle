@@ -51,17 +51,26 @@ const Modal: React.FC<ModalProps> = ({
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center ${
-        transparent ? 'bg-black bg-opacity-60' : 'bg-black'
-      } ${animationClass}`}
+      className={`fixed inset-0 z-50 flex items-center justify-center ${animationClass}`}
+      style={{
+        background: transparent 
+          ? 'rgba(0, 0, 0, 0.5)' 
+          : 'rgba(0, 0, 0, 0.9)',
+        backdropFilter: 'blur(4px)',
+        WebkitBackdropFilter: 'blur(4px)',
+        paddingTop: 'env(safe-area-inset-top)',
+        paddingBottom: 'env(safe-area-inset-bottom)',
+      }}
       onClick={onRequestClose}
       role="dialog"
       aria-modal="true"
-      style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <div
         className={`relative max-h-[90vh] max-w-[90vw] overflow-auto ${animationClass}`}
         onClick={(e) => e.stopPropagation()}
+        style={{
+          filter: 'drop-shadow(0 20px 25px rgba(0, 0, 0, 0.3))',
+        }}
       >
         {children}
       </div>
@@ -70,4 +79,3 @@ const Modal: React.FC<ModalProps> = ({
 };
 
 export default Modal;
-

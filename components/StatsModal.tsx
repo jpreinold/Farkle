@@ -21,56 +21,86 @@ const StatsModal: React.FC<StatsModalProps> = ({ visible, stats, onClose }) => {
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <div
-        className="w-[80%] p-4 rounded-lg"
-        style={{ backgroundColor: theme.modalBackground }}
+        className="w-[90%] max-w-lg rounded-2xl p-8 shadow-2xl"
+        style={{ backgroundColor: theme.cardBackground }}
       >
         <h2
-          className="text-2xl font-bold text-center mb-3"
+          className="text-3xl font-bold text-center mb-8"
           style={{ color: theme.titleText }}
         >
           Game Statistics
         </h2>
-        {playersArray.map((player, index) => {
-          const { rounds, totalScore, average, highest } = stats[player];
-          return (
-            <div
-              key={player}
-              className={`mb-3 py-2 ${
-                index !== playersArray.length - 1
-                  ? isDark
-                    ? 'border-b border-white'
-                    : 'border-b'
-                  : ''
-              }`}
-              style={{
-                borderBottomColor:
+        
+        <div className="space-y-4 mb-6">
+          {playersArray.map((player, index) => {
+            const { rounds, totalScore, average, highest } = stats[player];
+            return (
+              <div
+                key={player}
+                className={`p-5 rounded-xl transition-all duration-200 ${
                   index !== playersArray.length - 1
-                    ? isDark
-                      ? "#fff"
-                      : theme.primary
+                    ? 'mb-4 border-b-2'
+                    : ''
+                }`}
+                style={{
+                  backgroundColor: index % 2 === 0 
+                    ? `${theme.tableRowBorder}30` 
                     : 'transparent',
-              }}
-            >
-              <p
-                className="text-xl font-bold mb-1"
-                style={{ color: theme.text }}
+                  borderBottomColor: index !== playersArray.length - 1
+                    ? theme.borderColor
+                    : 'transparent',
+                }}
               >
-                {player}
-              </p>
-              <p style={{ color: theme.text }}>Rounds Played: {rounds}</p>
-              <p style={{ color: theme.text }}>Total Score: {totalScore}</p>
-              <p style={{ color: theme.text }}>
-                Average Score: {average.toFixed(2)}
-              </p>
-              <p style={{ color: theme.text }}>Highest Round: {highest}</p>
-            </div>
-          );
-        })}
-        <div className="mt-3">
+                <h3
+                  className="text-xl font-bold mb-3"
+                  style={{ color: theme.primary }}
+                >
+                  {player}
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-sm opacity-75 mb-1" style={{ color: theme.text }}>
+                      Rounds Played
+                    </p>
+                    <p className="text-lg font-semibold" style={{ color: theme.text }}>
+                      {rounds}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm opacity-75 mb-1" style={{ color: theme.text }}>
+                      Total Score
+                    </p>
+                    <p className="text-lg font-semibold" style={{ color: theme.text }}>
+                      {totalScore}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm opacity-75 mb-1" style={{ color: theme.text }}>
+                      Average Score
+                    </p>
+                    <p className="text-lg font-semibold" style={{ color: theme.text }}>
+                      {average.toFixed(2)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm opacity-75 mb-1" style={{ color: theme.text }}>
+                      Highest Round
+                    </p>
+                    <p className="text-lg font-semibold" style={{ color: theme.text }}>
+                      {highest}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        
+        <div className="flex justify-center">
           <CustomButton
             title="Close"
             onPress={onClose}
-            style={{ backgroundColor: theme.primary, width: '100%' }}
+            style={{ minWidth: '200px' }}
           />
         </div>
       </div>

@@ -1,5 +1,6 @@
 // components/Scoreboard.tsx
 import React, { useState, useEffect, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import storage from '../utils/storage';
 import ScoreEntry from './ScoreEntry';
 import GameOverModal from './GameOverModal';
@@ -15,22 +16,11 @@ interface Score {
   note: string;
 }
 
-interface ScoreboardProps {
-  players: string[];
-  targetScore: number;
-  onRestart: () => void;
-  headerOnPress: () => void;
-  continueGame?: boolean;
-}
-
-const Scoreboard: React.FC<ScoreboardProps> = ({
-  players,
-  targetScore,
-  onRestart,
-  headerOnPress,
-  continueGame = false,
-}) => {
+const Scoreboard: React.FC = () => {
   const { theme } = useContext(ThemeContext);
+  const navigate = useNavigate();
+  const [players, setPlayers] = useState<string[]>([]);
+  const [targetScore, setTargetScore] = useState<number>(10000);
   const [scores, setScores] = useState<Score[]>([]);
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
   const [gameOver, setGameOver] = useState(false);
@@ -40,26 +30,45 @@ const Scoreboard: React.FC<ScoreboardProps> = ({
   const currentPlayer = players[currentPlayerIndex];
   const isDark = theme.primary === darkTheme.primary;
 
-  // Load saved game state if continueGame is true.
+  // Load game configuration and state from localStorage
   useEffect(() => {
-    if (continueGame) {
-      const loadGameState = async () => {
-        try {
-          const savedState = await storage.getItem('GAME_STATE');
-          if (savedState !== null) {
-            const state = JSON.parse(savedState);
-            setScores(state.scores || []);
-            setCurrentPlayerIndex(state.currentPlayerIndex || 0);
-            setGameOver(state.gameOver || false);
-            setWinner(state.winner || '');
-          }
-        } catch (error) {
-          console.error('Error loading game state', error);
+    const loadGame = async () => {
+      try {
+        // Load game configuration (players and targetScore)
+        const gameConfigData = await storage.getItem('GAME_CONFIG');
+        if (!gameConfigData) {
+          // No game config found, redirect to home
+          navigate('/');
+          return;
         }
-      };
-      loadGameState();
-    }
-  }, [continueGame]);
+        
+        const config = JSON.parse(gameConfigData);
+        if (!config.players || config.players.length === 0) {
+          // Invalid config, redirect to home
+          navigate('/');
+          return;
+        }
+        
+        setPlayers(config.players || []);
+        setTargetScore(config.targetScore || 10000);
+
+        // Load saved game state
+        const savedState = await storage.getItem('GAME_STATE');
+        if (savedState !== null) {
+          const state = JSON.parse(savedState);
+          setScores(state.scores || []);
+          setCurrentPlayerIndex(state.currentPlayerIndex || 0);
+          setGameOver(state.gameOver || false);
+          setWinner(state.winner || '');
+        }
+      } catch (error) {
+        console.error('Error loading game state', error);
+        // If there's an error, redirect to home
+        navigate('/');
+      }
+    };
+    loadGame();
+  }, [navigate]);
 
   // Persist game state whenever it changes.
   useEffect(() => {
@@ -216,96 +225,138 @@ const Scoreboard: React.FC<ScoreboardProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, [players.length]);
 
+  const handleRestart = () => {
+    navigate('/');
+  };
+
   return (
     <div className="flex flex-col relative min-h-screen">
-      <Header onPress={headerOnPress} />
+      <Header />
       <div
-        className="flex-1 p-4 pb-72"
+        className="flex-1 p-6 md:p-8 pb-72"
         style={{ backgroundColor: theme.background }}
       >
-        <div className="overflow-x-auto">
-          <div className="rounded-lg overflow-hidden inline-block min-w-full">
-            <div
-              className="flex flex-row py-2 px-1"
-              style={{ backgroundColor: theme.tableHeader }}
-            >
-              <div
-                className="flex justify-center items-center p-1"
-                style={{ width: columnWidth }}
-              >
-                <span
-                  className="text-base font-bold text-center"
-                  style={{ color: theme.text }}
-                >
-                  Round
-                </span>
-              </div>
-              {players.map((player, index) => (
+        <div className="max-w-full mx-auto">
+          {/* Card container for table */}
+          <div 
+            className="card overflow-hidden"
+            style={{ 
+              backgroundColor: theme.cardBackground,
+              boxShadow: `0 8px 24px ${theme.shadowColor}`,
+            }}
+          >
+            <div className="overflow-x-auto">
+              <div className="inline-block min-w-full">
+                {/* Table Header */}
                 <div
-                  key={index}
-                  className="flex justify-center items-center p-1"
-                  style={{ width: columnWidth }}
-                >
-                  <span
-                    className="text-base font-bold text-center"
-                    style={{ color: theme.text }}
-                  >
-                    {player}
-                  </span>
-                </div>
-              ))}
-            </div>
-            <div className="max-h-[250px] overflow-y-auto">
-              {tableData.map((row, rIndex) => (
-                <div
-                  key={rIndex}
-                  className={`flex flex-row py-2 px-1 border-b ${
-                    isDark ? '' : 'border-opacity-20'
-                  }`}
-                  style={{
-                    borderBottomColor: isDark
-                      ? theme.secondary
-                      : theme.secondary + '33',
+                  className="flex flex-row py-4 px-4 sticky top-0 z-10"
+                  style={{ 
+                    backgroundColor: theme.tableHeader,
+                    borderBottom: `2px solid ${theme.borderColor}`,
                   }}
                 >
-                  {row.map((cell, cIndex) => (
-                    <button
-                      key={cIndex}
-                      className={`flex justify-center items-center p-1 ${
-                        cIndex === 0 ? 'cursor-default' : 'cursor-pointer hover:opacity-70'
-                      }`}
+                  <div
+                    className="flex justify-center items-center px-2"
+                    style={{ width: columnWidth }}
+                  >
+                    <span
+                      className="text-base font-bold text-center uppercase tracking-wide"
+                      style={{ color: theme.text }}
+                    >
+                      Round
+                    </span>
+                  </div>
+                  {players.map((player, index) => (
+                    <div
+                      key={index}
+                      className="flex justify-center items-center px-2"
                       style={{ width: columnWidth }}
-                      onClick={() => handleCellPress(rIndex, cIndex)}
                     >
                       <span
-                        className="text-base text-center"
+                        className="text-base font-bold text-center uppercase tracking-wide"
+                        style={{ color: theme.text }}
+                      >
+                        {player}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                
+                {/* Table Body */}
+                <div className="max-h-[300px] overflow-y-auto">
+                  {tableData.map((row, rIndex) => (
+                    <div
+                      key={rIndex}
+                      className={`flex flex-row py-3 px-4 transition-all duration-200 ${
+                        rIndex % 2 === 0 ? '' : 'bg-opacity-50'
+                      } hover:bg-opacity-80`}
+                      style={{
+                        backgroundColor: rIndex % 2 === 0 
+                          ? 'transparent' 
+                          : `${theme.tableRowBorder}40`,
+                        borderBottom: `1px solid ${theme.borderColor}`,
+                      }}
+                    >
+                      {row.map((cell, cIndex) => (
+                        <button
+                          key={cIndex}
+                          className={`flex justify-center items-center px-2 transition-all duration-200 ${
+                            cIndex === 0 
+                              ? 'cursor-default font-semibold' 
+                              : 'cursor-pointer hover:bg-opacity-20 rounded-md'
+                          }`}
+                          style={{ 
+                            width: columnWidth,
+                            backgroundColor: cIndex !== 0 ? 'transparent' : 'transparent',
+                          }}
+                          onClick={() => handleCellPress(rIndex, cIndex)}
+                          onMouseEnter={(e) => {
+                            if (cIndex !== 0) {
+                              e.currentTarget.style.backgroundColor = `${theme.secondary}20`;
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (cIndex !== 0) {
+                              e.currentTarget.style.backgroundColor = 'transparent';
+                            }
+                          }}
+                        >
+                          <span
+                            className="text-base text-center"
+                            style={{ color: theme.text }}
+                          >
+                            {cell}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+                
+                {/* Totals Row */}
+                <div
+                  className="flex flex-row py-4 px-4 border-t-2"
+                  style={{ 
+                    backgroundColor: theme.tableRowBorder,
+                    borderTopColor: theme.secondary,
+                  }}
+                >
+                  {totalsRow.map((cell, index) => (
+                    <div
+                      key={index}
+                      className="flex justify-center items-center px-2"
+                      style={{ width: columnWidth }}
+                    >
+                      <span
+                        className="text-lg font-bold text-center"
                         style={{ color: theme.text }}
                       >
                         {cell}
                       </span>
-                    </button>
+                    </div>
                   ))}
                 </div>
-              ))}
-            </div>
-            <div
-              className="flex flex-row py-2 px-1"
-              style={{ backgroundColor: theme.tableRowBorder }}
-            >
-              {totalsRow.map((cell, index) => (
-                <div
-                  key={index}
-                  className="flex justify-center items-center p-1"
-                  style={{ width: columnWidth }}
-                >
-                  <span
-                    className="text-base font-bold text-center"
-                    style={{ color: theme.text }}
-                  >
-                    {cell}
-                  </span>
-                </div>
-              ))}
+              </div>
             </div>
           </div>
         </div>
@@ -322,7 +373,7 @@ const Scoreboard: React.FC<ScoreboardProps> = ({
           visible={gameOver}
           winner={winner}
           finalScores={sortedFinalScores}
-          onRestart={onRestart}
+          onRestart={handleRestart}
         />
       )}
       {editingEntry && (

@@ -18,64 +18,88 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ visible, winner, finalSco
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onRestart}>
       <div
-        className="w-[85%] p-6 rounded-lg shadow-lg flex flex-col items-center"
-        style={{ backgroundColor: theme.modalBackground }}
+        className="w-[90%] max-w-lg rounded-2xl p-8 flex flex-col items-center shadow-2xl"
+        style={{ backgroundColor: theme.cardBackground }}
       >
-        <h2
-          className="text-2xl font-bold mb-3"
-          style={{ color: theme.titleText }}
-        >
-          Game Over!
-        </h2>
-        <p
-          className="text-xl font-semibold mb-2"
-          style={{ color: isDark ? theme.text : theme.primary }}
-        >
-          Winner: {winner}
-        </p>
-        <p
-          className="text-xl mb-3"
-          style={{ color: theme.text }}
-        >
-          Final Standings:
-        </p>
-        <div className="max-h-[200px] w-full mb-3 overflow-y-auto">
-          {finalScores.map((score, index) => (
-            <div
-              key={index}
-              className={`flex flex-row justify-between py-1 border-b ${
-                isDark ? 'border-white' : ''
-              }`}
-              style={{
-                borderBottomColor: isDark ? "#fff" : theme.primary,
-              }}
+        <div className="text-center mb-6">
+          <h2
+            className="text-4xl font-bold mb-4"
+            style={{ color: theme.titleText }}
+          >
+            🎉 Game Over! 🎉
+          </h2>
+          <div 
+            className="inline-block px-6 py-3 rounded-full mb-4"
+            style={{ 
+              background: `linear-gradient(135deg, ${theme.secondary} 0%, ${theme.primary} 100%)`,
+              boxShadow: `0 4px 14px ${theme.shadowColor}`,
+            }}
+          >
+            <p
+              className="text-2xl font-bold"
+              style={{ color: '#ffffff' }}
             >
-              <span
-                className="text-base font-bold w-8"
-                style={{ color: theme.text }}
-              >
-                {index + 1}.
-              </span>
-              <span
-                className="text-base flex-1"
-                style={{ color: theme.text }}
-              >
-                {score.player}
-              </span>
-              <span
-                className="text-base font-bold w-12 text-right"
-                style={{ color: theme.text }}
-              >
-                {score.total}
-              </span>
-            </div>
-          ))}
+              Winner: {winner}
+            </p>
+          </div>
         </div>
-        <div className="mt-5 w-full">
+        
+        <div className="w-full mb-6">
+          <p
+            className="text-xl font-semibold mb-4 text-center"
+            style={{ color: theme.text }}
+          >
+            Final Standings
+          </p>
+          <div className="space-y-3">
+            {finalScores.map((score, index) => (
+              <div
+                key={index}
+                className={`flex flex-row justify-between items-center py-3 px-4 rounded-lg transition-all duration-200 ${
+                  index === 0 ? 'ring-2 ring-offset-2' : ''
+                }`}
+                style={{
+                  backgroundColor: index === 0 
+                    ? `${theme.secondary}30` 
+                    : index % 2 === 0 
+                      ? 'transparent' 
+                      : `${theme.tableRowBorder}20`,
+                  border: `1px solid ${theme.borderColor}`,
+                  ringColor: theme.secondary,
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <div 
+                    className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-white"
+                    style={{ 
+                      backgroundColor: index === 0 ? theme.secondary : theme.primary,
+                    }}
+                  >
+                    {index + 1}
+                  </div>
+                  <span
+                    className="text-lg font-semibold"
+                    style={{ color: theme.text }}
+                  >
+                    {score.player}
+                  </span>
+                </div>
+                <span
+                  className="text-xl font-bold"
+                  style={{ color: theme.primary }}
+                >
+                  {score.total}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        <div className="w-full">
           <CustomButton
-            title="Restart Game"
+            title="New Game"
             onPress={onRestart}
-            style={{ backgroundColor: theme.primary, width: '100%' }}
+            style={{ width: '100%' }}
           />
         </div>
       </div>

@@ -12,6 +12,9 @@ export type Theme = {
   modalBackground: string;
   tableText: string;
   titleText: string;
+  shadowColor: string;
+  cardBackground: string;
+  borderColor: string;
 };
 
 export const lightTheme: Theme = {
@@ -25,6 +28,9 @@ export const lightTheme: Theme = {
   modalBackground: '#fff',
   tableText: '#2E86C1',
   titleText: '#000',
+  shadowColor: 'rgba(46, 134, 193, 0.15)',
+  cardBackground: '#ffffff',
+  borderColor: '#E0E0E0',
 };
 
 export const darkTheme: Theme = {
@@ -35,9 +41,12 @@ export const darkTheme: Theme = {
   inputBorder: '#5D6D7E',
   tableHeader: '#5D6D7E',
   tableRowBorder: '#566573',
-  modalBackground: '#333',
+  modalBackground: '#2C3E50',
   tableText: '#fff',
   titleText: '#fff',
+  shadowColor: 'rgba(0, 0, 0, 0.4)',
+  cardBackground: '#2C3E50',
+  borderColor: '#34495E',
 };
 
 export const oceanBreezeTheme: Theme = {
@@ -51,6 +60,9 @@ export const oceanBreezeTheme: Theme = {
   modalBackground: '#d0efff',
   tableText: '#fff',
   titleText: '#000',
+  shadowColor: 'rgba(0, 119, 182, 0.2)',
+  cardBackground: '#ffffff',
+  borderColor: '#90E0EF',
 };
 
 export const sunsetGlowTheme: Theme = {
@@ -64,6 +76,9 @@ export const sunsetGlowTheme: Theme = {
   modalBackground: '#ffe5d0',
   tableText: '#fff',
   titleText: '#000',
+  shadowColor: 'rgba(211, 84, 0, 0.2)',
+  cardBackground: '#ffffff',
+  borderColor: '#F5CBA7',
 };
 
 export const purpleTheme: Theme = {
@@ -77,6 +92,9 @@ export const purpleTheme: Theme = {
   modalBackground: '#fff',
   tableText: '#8E24AA',
   titleText: '#000',
+  shadowColor: 'rgba(142, 36, 170, 0.2)',
+  cardBackground: '#ffffff',
+  borderColor: '#CE93D8',
 };
 
 export const greenTheme: Theme = {
@@ -90,6 +108,9 @@ export const greenTheme: Theme = {
   modalBackground: '#fff',
   tableText: '#388E3C',
   titleText: '#000',
+  shadowColor: 'rgba(56, 142, 60, 0.2)',
+  cardBackground: '#ffffff',
+  borderColor: '#A5D6A7',
 };
 
 export const pinkTheme: Theme = {
@@ -103,6 +124,9 @@ export const pinkTheme: Theme = {
   modalBackground: '#fff',
   tableText: '#E91E63',
   titleText: '#000',
+  shadowColor: 'rgba(233, 30, 99, 0.2)',
+  cardBackground: '#ffffff',
+  borderColor: '#F8BBD0',
 };
 
 type ThemeContextType = {
