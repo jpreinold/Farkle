@@ -87,9 +87,9 @@ const Game: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const loadSimulation = async () => {
+    const loadGame = async () => {
       try {
-        const config = await storage.getItem("GAME_CONFIG_SIMULATION");
+        const config = await storage.getItem("GAME_CONFIG");
         if (!config) {
           navigate("/game-setup");
           return;
@@ -102,7 +102,7 @@ const Game: React.FC = () => {
         setPlayers(parsedConfig.players);
         setTargetScore(parsedConfig.targetScore || 10000);
 
-        const savedState = await storage.getItem("GAME_STATE_SIMULATION");
+        const savedState = await storage.getItem("GAME_STATE");
         if (savedState) {
           const parsedState = JSON.parse(savedState);
           const normalizedScores: ScoreEntry[] = (
@@ -120,14 +120,14 @@ const Game: React.FC = () => {
           setWinner(parsedState.winner || "");
         }
       } catch (error) {
-        console.error("Error loading simulation game state:", error);
+        console.error("Error loading game state:", error);
         navigate("/game-setup");
       } finally {
         setLoading(false);
       }
     };
 
-    loadSimulation();
+    loadGame();
   }, [navigate]);
 
   useEffect(() => {
@@ -140,9 +140,9 @@ const Game: React.FC = () => {
           gameOver,
           winner,
         };
-        await storage.setItem("GAME_STATE_SIMULATION", JSON.stringify(state));
+        await storage.setItem("GAME_STATE", JSON.stringify(state));
       } catch (error) {
-        console.error("Error saving simulation game state:", error);
+        console.error("Error saving game state:", error);
       }
     };
     saveState();
@@ -562,7 +562,7 @@ const Game: React.FC = () => {
         : pendingScoreRef.current;
     const totalScore = turnScore + additionalScore;
     if (totalScore === 0) return;
-    finalizeTurn(totalScore, "Simulation");
+    finalizeTurn(totalScore, "Game Turn");
   }, [
     gameOver,
     turnScore,
@@ -630,10 +630,10 @@ const Game: React.FC = () => {
           style={{ backgroundColor: theme.background }}
         >
           <p className="text-lg font-semibold" style={{ color: theme.text }}>
-            No simulation game configured.
+            No game configured.
           </p>
           <CustomButton
-            title="Go to Simulation Setup"
+            title="Go to Game Setup"
             onPress={handleBackToSetup}
             style={{ minWidth: "220px" }}
           />

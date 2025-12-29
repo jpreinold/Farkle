@@ -1,4 +1,4 @@
-// components/GameSetupSimulation.tsx
+// components/GameSetup.tsx
 import React, { useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CustomButton from './CustomButton';
@@ -6,7 +6,7 @@ import Header from './Header';
 import { ThemeContext } from './ThemeContext';
 import storage from '../utils/storage';
 
-const GameSetupSimulation: React.FC = () => {
+const GameSetup: React.FC = () => {
   const { theme } = useContext(ThemeContext);
   const navigate = useNavigate();
   const [targetScore, setTargetScore] = useState('10000');
@@ -20,7 +20,7 @@ const GameSetupSimulation: React.FC = () => {
     }
   };
 
-  const handleStartSimulation = async () => {
+  const handleStartGame = async () => {
     if (players.length === 0) return;
 
     const target = parseInt(targetScore, 10) || 10000;
@@ -30,11 +30,11 @@ const GameSetupSimulation: React.FC = () => {
         players,
         targetScore: target,
       };
-      await storage.setItem('GAME_CONFIG_SIMULATION', JSON.stringify(gameConfig));
-      await storage.removeItem('GAME_STATE_SIMULATION');
+      await storage.setItem('GAME_CONFIG', JSON.stringify(gameConfig));
+      await storage.removeItem('GAME_STATE');
       navigate('/game');
     } catch (error) {
-      console.error('Error saving simulation game configuration:', error);
+      console.error('Error saving game configuration:', error);
     }
   };
 
@@ -50,7 +50,7 @@ const GameSetupSimulation: React.FC = () => {
             className="text-3xl md:text-4xl font-bold text-center mb-2"
             style={{ color: theme.titleText }}
           >
-            Simulation Setup
+            Game Setup
           </h2>
           <p
             className="text-center mb-8 opacity-80"
@@ -92,7 +92,7 @@ const GameSetupSimulation: React.FC = () => {
               placeholder="Enter target score"
               value={targetScore}
               onChange={(e) => setTargetScore(e.target.value)}
-              aria-label="Simulation Target Score Input"
+              aria-label="Game Target Score Input"
             />
           </div>
 
@@ -135,7 +135,7 @@ const GameSetupSimulation: React.FC = () => {
                     addPlayer();
                   }
                 }}
-                aria-label="Simulation Player Name Input"
+                aria-label="Game Player Name Input"
               />
               <CustomButton title="Add" onPress={addPlayer} />
             </div>
@@ -173,12 +173,12 @@ const GameSetupSimulation: React.FC = () => {
             </div>
           )}
 
-          {/* Start Simulation Button */}
+          {/* Start Game Button */}
           {players.length > 0 && (
             <div className="flex justify-center">
               <CustomButton
-                title="Start Simulation"
-                onPress={handleStartSimulation}
+                title="Start Game"
+                onPress={handleStartGame}
                 style={{ minWidth: '220px', paddingLeft: '32px', paddingRight: '32px' }}
               />
             </div>
@@ -189,6 +189,6 @@ const GameSetupSimulation: React.FC = () => {
   );
 };
 
-export default GameSetupSimulation;
+export default GameSetup;
 
 

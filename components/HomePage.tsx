@@ -10,7 +10,7 @@ const HomePage: React.FC = () => {
   const { theme } = useContext(ThemeContext);
   const navigate = useNavigate();
 
-  const handleNewSimulation = () => {
+  const handleNewGame = () => {
     navigate('/game-setup');
   };
 
@@ -73,8 +73,8 @@ const HomePage: React.FC = () => {
             }}
           >
             <CustomButton 
-              title="New Simulation" 
-              onPress={handleNewSimulation} 
+              title="New Game" 
+              onPress={handleNewGame} 
               style={{ width: '100%', marginBottom: 0 }} 
             />
           </div>
