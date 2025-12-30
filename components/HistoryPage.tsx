@@ -12,7 +12,10 @@ import CustomButton from "./CustomButton";
 import {
   GameSessionSummary,
   listSessions,
+  loadSession,
+  GameSessionState,
 } from "../utils/gameSessionStorage";
+import CompletedGameModal from "./CompletedGameModal";
 
 const HistoryPage: React.FC = () => {
   const { theme } = useContext(ThemeContext);
@@ -20,6 +23,11 @@ const HistoryPage: React.FC = () => {
   const [sessions, setSessions] = useState<GameSessionSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [detailModalVisible, setDetailModalVisible] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState<string | null>(null);
+  const [selectedSession, setSelectedSession] =
+    useState<GameSessionState | null>(null);
 
   const loadSessions = useCallback(async () => {
     setLoading(true);
@@ -74,6 +82,36 @@ const HistoryPage: React.FC = () => {
   const handleSessionSelect = (sessionId: string) => {
     navigate(`/game/${sessionId}`);
   };
+
+  const handleDetailClose = useCallback(() => {
+    setDetailModalVisible(false);
+    setDetailLoading(false);
+    setDetailError(null);
+    setSelectedSession(null);
+  }, []);
+
+  const handleCompletedSessionClick = useCallback(
+    async (sessionId: string) => {
+      setDetailModalVisible(true);
+      setDetailLoading(true);
+      setDetailError(null);
+      setSelectedSession(null);
+      try {
+        const session = await loadSession(sessionId);
+        if (!session) {
+          setDetailError("Unable to find saved data for this game.");
+          return;
+        }
+        setSelectedSession(session);
+      } catch (err) {
+        console.error("Failed to load session details:", err);
+        setDetailError("Unable to load game details.");
+      } finally {
+        setDetailLoading(false);
+      }
+    },
+    [loadSession]
+  );
 
   return (
     <>
@@ -197,9 +235,11 @@ const HistoryPage: React.FC = () => {
             ) : (
               <div className="space-y-3">
                 {completedSessions.map((session) => (
-                  <div
+                  <button
                     key={session.id}
-                    className="w-full p-4 rounded-xl border"
+                    type="button"
+                    onClick={() => handleCompletedSessionClick(session.id)}
+                    className="w-full text-left p-4 rounded-xl border transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2"
                     style={{
                       borderColor: theme.borderColor,
                       backgroundColor: theme.background,
@@ -215,13 +255,20 @@ const HistoryPage: React.FC = () => {
                     <p className="text-sm opacity-60">
                       Completed {formatTimestamp(session.completedAt || session.updatedAt)}
                     </p>
-                  </div>
+                  </button>
                 ))}
               </div>
             )}
           </section>
         </div>
       </div>
+      <CompletedGameModal
+        visible={detailModalVisible}
+        loading={detailLoading}
+        session={selectedSession}
+        error={detailError}
+        onClose={handleDetailClose}
+      />
     </>
   );
 };
